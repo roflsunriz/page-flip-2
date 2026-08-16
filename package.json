@@ -1,6 +1,6 @@
 {
     "name": "page-flip-2",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "Bun-first page-turning library with bidirectional reading support",
     "type": "module",
     "main": "./dist/page-flip-2.js",
