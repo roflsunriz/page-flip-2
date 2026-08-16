@@ -39,16 +39,16 @@ export class HTMLRender extends Render {
     private createShadows(): void {
         this.element.insertAdjacentHTML(
             'beforeend',
-            `<div class="stf__outerShadow"></div>
-             <div class="stf__innerShadow"></div>
-             <div class="stf__hardShadow"></div>
-             <div class="stf__hardInnerShadow"></div>`
+            `<div class="page-flip-2__outer-shadow"></div>
+             <div class="page-flip-2__inner-shadow"></div>
+             <div class="page-flip-2__hard-shadow"></div>
+             <div class="page-flip-2__hard-inner-shadow"></div>`,
         );
 
-        this.outerShadow = this.element.querySelector('.stf__outerShadow');
-        this.innerShadow = this.element.querySelector('.stf__innerShadow');
-        this.hardShadow = this.element.querySelector('.stf__hardShadow');
-        this.hardInnerShadow = this.element.querySelector('.stf__hardInnerShadow');
+        this.outerShadow = this.element.querySelector('.page-flip-2__outer-shadow');
+        this.innerShadow = this.element.querySelector('.page-flip-2__inner-shadow');
+        this.hardShadow = this.element.querySelector('.page-flip-2__hard-shadow');
+        this.hardInnerShadow = this.element.querySelector('.page-flip-2__hard-inner-shadow');
     }
 
     public clearShadow(): void {
@@ -61,7 +61,7 @@ export class HTMLRender extends Render {
     }
 
     public reload(): void {
-        const testShadow = this.element.querySelector('.stf__outerShadow');
+        const testShadow = this.element.querySelector('.page-flip-2__outer-shadow');
 
         if (!testShadow) {
             this.createShadows();
@@ -189,8 +189,8 @@ export class HTMLRender extends Render {
                 rgba(0, 0, 0, 0) 100%);
             transform-origin: ${shadowTranslate}px 100px;
             transform: translate3d(${shadowPos.x - shadowTranslate}px, ${
-            shadowPos.y - 100
-        }px, 0) rotate(${angle}rad);
+                shadowPos.y - 100
+            }px, 0) rotate(${angle}rad);
             clip-path: ${polygon};
             -webkit-clip-path: ${polygon};
         `;
@@ -248,12 +248,12 @@ export class HTMLRender extends Render {
             width: ${this.shadow.width}px;
             height: ${rect.height * 2}px;
             background: linear-gradient(${shadowDirection}, rgba(0, 0, 0, ${
-            this.shadow.opacity
-        }), rgba(0, 0, 0, 0));
+                this.shadow.opacity
+            }), rgba(0, 0, 0, 0));
             transform-origin: ${shadowTranslate}px 100px;
             transform: translate3d(${shadowPos.x - shadowTranslate}px, ${
-            shadowPos.y - 100
-        }px, 0) rotate(${angle}rad);
+                shadowPos.y - 100
+            }px, 0) rotate(${angle}rad);
             clip-path: ${polygon};
             -webkit-clip-path: ${polygon};
         `;

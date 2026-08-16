@@ -118,7 +118,7 @@ export abstract class Render {
         if (this.animation !== null) {
             // Find current frame of animation
             const frameIndex = Math.round(
-                (timer - this.animation.startedAt) / this.animation.durationFrame
+                (timer - this.animation.startedAt) / this.animation.durationFrame,
             );
 
             if (frameIndex < this.animation.frames.length) {
@@ -157,7 +157,7 @@ export abstract class Render {
     public startAnimation(
         frames: FrameAction[],
         duration: number,
-        onAnimateEnd: AnimationSuccessAction
+        onAnimateEnd: AnimationSuccessAction,
     ): void {
         this.finishAnimation(); // finish the previous animation process
 
@@ -270,7 +270,7 @@ export abstract class Render {
         pos: Point,
         angle: number,
         progress: number,
-        direction: FlipDirection
+        direction: FlipDirection,
     ): void {
         if (!this.app.getSettings().drawShadow) return;
 
@@ -383,7 +383,9 @@ export abstract class Render {
     public setBottomPage(page: Page): void {
         if (page !== null)
             page.setOrientation(
-                this.direction === FlipDirection.BACK ? PageOrientation.LEFT : PageOrientation.RIGHT
+                this.direction === FlipDirection.BACK
+                    ? PageOrientation.LEFT
+                    : PageOrientation.RIGHT,
             );
 
         this.bottomPage = page;
@@ -400,7 +402,7 @@ export abstract class Render {
                 this.direction === FlipDirection.FORWARD &&
                     this.orientation !== Orientation.PORTRAIT
                     ? PageOrientation.LEFT
-                    : PageOrientation.RIGHT
+                    : PageOrientation.RIGHT,
             );
 
         this.flippingPage = page;

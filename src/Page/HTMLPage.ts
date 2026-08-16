@@ -19,7 +19,7 @@ export class HTMLPage extends Page {
         super(render, density);
 
         this.element = element;
-        this.element.classList.add('stf__item');
+        this.element.classList.add('page-flip-2__item');
         this.element.classList.add('--' + density);
     }
 
@@ -35,7 +35,7 @@ export class HTMLPage extends Page {
             this.temporaryCopy = new HTMLPage(
                 this.render,
                 this.copiedElement,
-                this.nowDrawingDensity
+                this.nowDrawingDensity,
             );
         }
 
@@ -72,9 +72,11 @@ export class HTMLPage extends Page {
             height: ${pageHeight}px;
         `;
 
-        density === PageDensity.HARD
-            ? this.drawHard(commonStyle)
-            : this.drawSoft(pagePos, commonStyle);
+        if (density === PageDensity.HARD) {
+            this.drawHard(commonStyle);
+        } else {
+            this.drawSoft(pagePos, commonStyle);
+        }
     }
 
     private drawHard(commonStyle = ''): void {

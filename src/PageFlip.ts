@@ -14,7 +14,7 @@ import { HTMLRender } from './Render/HTMLRender';
 import { FlipSetting, Settings } from './Settings';
 import { UI } from './UI/UI';
 
-import './Style/stPageFlip.css';
+import './styles/page-flip-2.css';
 
 /**
  * Class representing a main PageFlip object

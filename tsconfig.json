@@ -1,22 +1,19 @@
 {
-    "files": ["src/PageFlip.ts", "src/BasicTypes.ts"],
     "compilerOptions": {
-        "declaration": true,
-        "declarationDir": "dist",
+        "target": "ES2019",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "strict": false,
         "noImplicitAny": true,
-        "lib": ["es6", "es2016", "dom", "dom.iterable"],
-        "module": "es6",
-        "target": "es2017"
+        "declaration": true,
+        "declarationMap": true,
+        "declarationDir": "dist",
+        "rootDir": "src",
+        "sourceMap": true,
+        "skipLibCheck": true,
+        "useDefineForClassFields": false,
+        "noEmitOnError": true
     },
-    "typedocOptions": {
-        "name": "StPageFlip",
-        "mode": "file",
-        "out": "dist/docs",
-        "readme": "none",
-        "excludePrivate": true,
-        "excludeNotExported": true,
-        "excludeProtected": true,
-        "categorizeByGroup": true
-    },
-    "reference": []
+    "include": ["src/**/*.ts"]
 }

@@ -15,7 +15,7 @@ export class HTMLPageCollection extends PageCollection {
         app: PageFlip,
         render: Render,
         element: HTMLElement,
-        items: NodeListOf<HTMLElement> | HTMLElement[]
+        items: NodeListOf<HTMLElement> | HTMLElement[],
     ) {
         super(app, render);
 
@@ -28,7 +28,7 @@ export class HTMLPageCollection extends PageCollection {
             const page = new HTMLPage(
                 this.render,
                 pageElement,
-                pageElement.dataset['density'] === 'hard' ? PageDensity.HARD : PageDensity.SOFT
+                pageElement.dataset['density'] === 'hard' ? PageDensity.HARD : PageDensity.SOFT,
             );
 
             page.load();

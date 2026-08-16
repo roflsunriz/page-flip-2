@@ -37,11 +37,11 @@ export abstract class UI {
     protected constructor(inBlock: HTMLElement, app: PageFlip, setting: FlipSetting) {
         this.parentElement = inBlock;
 
-        inBlock.classList.add('stf__parent');
+        inBlock.classList.add('page-flip-2__parent');
         // Add first wrapper
-        inBlock.insertAdjacentHTML('afterbegin', '<div class="stf__wrapper"></div>');
+        inBlock.insertAdjacentHTML('afterbegin', '<div class="page-flip-2__wrapper"></div>');
 
-        this.wrapper = inBlock.querySelector('.stf__wrapper');
+        this.wrapper = inBlock.querySelector('.page-flip-2__wrapper');
 
         this.app = app;
 
@@ -265,13 +265,13 @@ export abstract class UI {
                         this.app.flipPrev(
                             this.touchPoint.point.y < this.app.getRender().getRect().height / 2
                                 ? FlipCorner.TOP
-                                : FlipCorner.BOTTOM
+                                : FlipCorner.BOTTOM,
                         );
                     } else {
                         this.app.flipNext(
                             this.touchPoint.point.y < this.app.getRender().getRect().height / 2
                                 ? FlipCorner.TOP
-                                : FlipCorner.BOTTOM
+                                : FlipCorner.BOTTOM,
                         );
                     }
                     isSwipe = true;

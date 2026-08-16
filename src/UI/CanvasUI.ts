@@ -1,6 +1,6 @@
-import {UI} from "./UI";
-import {PageFlip} from "../PageFlip";
-import {FlipSetting} from "../Settings";
+import { UI } from './UI';
+import { PageFlip } from '../PageFlip';
+import { FlipSetting } from '../Settings';
 
 /**
  * UI for canvas mode
@@ -11,7 +11,7 @@ export class CanvasUI extends UI {
     constructor(inBlock: HTMLElement, app: PageFlip, setting: FlipSetting) {
         super(inBlock, app, setting);
 
-        this.wrapper.innerHTML = '<canvas class="stf__canvas"></canvas>';
+        this.wrapper.innerHTML = '<canvas class="page-flip-2__canvas"></canvas>';
 
         this.canvas = inBlock.querySelectorAll('canvas')[0];
 

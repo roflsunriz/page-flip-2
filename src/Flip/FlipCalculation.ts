@@ -34,7 +34,7 @@ export class FlipCalculation {
         private corner: FlipCorner,
 
         pageWidth: string,
-        pageHeight: string
+        pageHeight: string,
     ) {
         this.pageWidth = parseInt(pageWidth, 10);
         this.pageHeight = parseInt(pageHeight, 10);
@@ -42,9 +42,9 @@ export class FlipCalculation {
 
     /**
      * The main calculation method
-     * 
+     *
      * @param {Point} localPos - Touch Point Coordinates (relative active page!)
-     * 
+     *
      * @returns {boolean} True - if the calculations were successful, false if errors occurred
      */
     public calc(localPos: Point): boolean {
@@ -55,14 +55,14 @@ export class FlipCalculation {
             this.calculateIntersectPoint(this.position);
 
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
 
     /**
      * Get the crop area for the flipping page
-     * 
+     *
      * @returns {Point[]} Polygon page
      */
     public getFlippingClipArea(): Point[] {
@@ -91,7 +91,7 @@ export class FlipCalculation {
 
     /**
      * Get the crop area for the page that is below the page to be flipped
-     * 
+     *
      * @returns {Point[]} Polygon page
      */
     public getBottomClipArea(): Point[] {
@@ -112,7 +112,7 @@ export class FlipCalculation {
             if (
                 Helper.GetDistanceBetweenTwoPoint(
                     this.sideIntersectPoint,
-                    this.topIntersectPoint
+                    this.topIntersectPoint,
                 ) >= 10
             )
                 result.push(this.sideIntersectPoint);
@@ -177,7 +177,7 @@ export class FlipCalculation {
     public getFlippingProgress(): number {
         return Math.abs(((this.position.x - this.pageWidth) / (2 * this.pageWidth)) * 100);
     }
-    
+
     /**
      * Get flipping corner position (top, bottom)
      */
@@ -234,13 +234,13 @@ export class FlipCalculation {
             result = this.checkPositionAtCenterLine(
                 result,
                 { x: 0, y: 0 },
-                { x: 0, y: this.pageHeight }
+                { x: 0, y: this.pageHeight },
             );
         } else {
             result = this.checkPositionAtCenterLine(
                 result,
                 { x: 0, y: this.pageHeight },
-                { x: 0, y: 0 }
+                { x: 0, y: 0 },
             );
         }
 
@@ -273,7 +273,6 @@ export class FlipCalculation {
         return angle;
     }
 
-
     private getPageRect(localPos: Point): RectPoints {
         if (this.corner === FlipCorner.TOP) {
             return this.getRectFromBasePoint(
@@ -283,7 +282,7 @@ export class FlipCalculation {
                     { x: 0, y: this.pageHeight },
                     { x: this.pageWidth, y: this.pageHeight },
                 ],
-                localPos
+                localPos,
             );
         }
 
@@ -294,7 +293,7 @@ export class FlipCalculation {
                 { x: 0, y: 0 },
                 { x: this.pageWidth, y: 0 },
             ],
-            localPos
+            localPos,
         );
     }
 
@@ -335,7 +334,7 @@ export class FlipCalculation {
                 [
                     { x: 0, y: 0 },
                     { x: this.pageWidth, y: 0 },
-                ]
+                ],
             );
 
             this.sideIntersectPoint = Helper.GetIntersectBetweenTwoSegment(
@@ -344,7 +343,7 @@ export class FlipCalculation {
                 [
                     { x: this.pageWidth, y: 0 },
                     { x: this.pageWidth, y: this.pageHeight },
-                ]
+                ],
             );
 
             this.bottomIntersectPoint = Helper.GetIntersectBetweenTwoSegment(
@@ -353,7 +352,7 @@ export class FlipCalculation {
                 [
                     { x: 0, y: this.pageHeight },
                     { x: this.pageWidth, y: this.pageHeight },
-                ]
+                ],
             );
         } else {
             this.topIntersectPoint = Helper.GetIntersectBetweenTwoSegment(
@@ -362,7 +361,7 @@ export class FlipCalculation {
                 [
                     { x: 0, y: 0 },
                     { x: this.pageWidth, y: 0 },
-                ]
+                ],
             );
 
             this.sideIntersectPoint = Helper.GetIntersectBetweenTwoSegment(
@@ -371,7 +370,7 @@ export class FlipCalculation {
                 [
                     { x: this.pageWidth, y: 0 },
                     { x: this.pageWidth, y: this.pageHeight },
-                ]
+                ],
             );
 
             this.bottomIntersectPoint = Helper.GetIntersectBetweenTwoSegment(
@@ -380,7 +379,7 @@ export class FlipCalculation {
                 [
                     { x: 0, y: this.pageHeight },
                     { x: this.pageWidth, y: this.pageHeight },
-                ]
+                ],
             );
         }
     }
@@ -388,7 +387,7 @@ export class FlipCalculation {
     private checkPositionAtCenterLine(
         checkedPos: Point,
         centerOne: Point,
-        centerTwo: Point
+        centerTwo: Point,
     ): Point {
         let result = checkedPos;
 

@@ -1,0 +1,5 @@
+AGENTS.md
+COMMON-AGENTS.md
+bun.lock
+dist/
+node_modules/

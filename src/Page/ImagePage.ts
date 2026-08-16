@@ -19,7 +19,7 @@ export class ImagePage extends Page {
         this.image.src = href;
     }
 
-    public draw(tempDensity?: PageDensity): void {
+    public draw(): void {
         const ctx = (this.render as CanvasRender).getContext();
 
         const pagePos = this.render.convertToGlobal(this.state.position);
@@ -72,7 +72,7 @@ export class ImagePage extends Page {
         ctx: CanvasRenderingContext2D,
         shiftPos: Point,
         pageWidth: number,
-        pageHeight: number
+        pageHeight: number,
     ): void {
         ctx.beginPath();
         ctx.strokeStyle = 'rgb(200, 200, 200)';
@@ -94,7 +94,7 @@ export class ImagePage extends Page {
             middlePoint.y,
             20,
             this.loadingAngle,
-            (3 * Math.PI) / 2 + this.loadingAngle
+            (3 * Math.PI) / 2 + this.loadingAngle,
         );
         ctx.stroke();
         ctx.closePath();

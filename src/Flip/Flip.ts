@@ -104,7 +104,7 @@ export class Flip {
         this.animateFlippingTo(
             { x: rect.pageWidth - topMargins, y: yStart },
             { x: -rect.pageWidth, y: yDest },
-            true
+            true,
         );
     }
 
@@ -161,11 +161,11 @@ export class Flip {
                 direction,
                 flipCorner,
                 rect.pageWidth.toString(10), // fix bug with type casting
-                rect.height.toString(10) // fix bug with type casting
+                rect.height.toString(10), // fix bug with type casting
             );
 
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
@@ -206,7 +206,7 @@ export class Flip {
                 this.calc.getShadowStartPoint(),
                 this.calc.getShadowAngle(),
                 progress,
-                this.calc.getDirection()
+                this.calc.getDirection(),
             );
         }
     }
@@ -230,7 +230,7 @@ export class Flip {
                 this.app.getPageCollection().setCurrentSpreadIndex(next + 1);
                 this.flipPrev(corner);
             }
-        } catch (e) {
+        } catch {
             //
         }
     }
@@ -306,7 +306,7 @@ export class Flip {
                     { x: pageWidth - 1, y: yStart },
                     { x: pageWidth - fixedCornerSize, y: yDest },
                     false,
-                    false
+                    false,
                 );
             } else {
                 this.do(this.render.convertToPage(globalPos));
@@ -331,7 +331,7 @@ export class Flip {
         start: Point,
         dest: Point,
         isTurned: boolean,
-        needReset = true
+        needReset = true,
     ): void {
         const points = Helper.GetCordsFromTwoPoint(start, dest);
 
