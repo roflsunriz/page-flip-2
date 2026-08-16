@@ -13,6 +13,11 @@
 ### Added
 
 - 単独表示の表紙を雑誌のように柔らかくめくれるよう、`showCover` の配置を維持したまま表紙密度を選べる `coverDensity: 'hard' | 'soft'` を追加した。
+- Canvas画像ページの余白を表示先へ合わせられるよう、背景色を指定する `backgroundColor` を追加した。
+
+### Changed
+
+- Canvasの影を完全に無効化できるよう、`drawShadow: false` の対象へめくり影だけでなく中央の綴じ影も含めた。
 
 ## [0.1.1] - 2026-08-16
 

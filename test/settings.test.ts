@@ -87,4 +87,16 @@ describe('Settings', () => {
             }),
         ).toThrow('Invalid cover density');
     });
+
+    it('validates the Canvas background color', () => {
+        const settings = new Settings();
+
+        expect(
+            settings.getSettings({ width: 400, height: 600, backgroundColor: '#123456' })
+                .backgroundColor,
+        ).toBe('#123456');
+        expect(() =>
+            settings.getSettings({ width: 400, height: 600, backgroundColor: '   ' }),
+        ).toThrow('Invalid background color');
+    });
 });

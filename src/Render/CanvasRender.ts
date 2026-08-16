@@ -49,7 +49,7 @@ export class CanvasRender extends Render {
 
         if (this.bottomPage != null) this.bottomPage.draw();
 
-        this.drawBookShadow();
+        if (this.getSettings().drawShadow) this.drawBookShadow();
 
         if (this.flippingPage != null) this.flippingPage.draw();
 
@@ -168,7 +168,7 @@ export class CanvasRender extends Render {
     }
 
     private clear(): void {
-        this.ctx.fillStyle = 'white';
+        this.ctx.fillStyle = this.getSettings().backgroundColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }

@@ -43,6 +43,8 @@ export interface FlipSetting {
 
     /** Draw shadows or not when page flipping */
     drawShadow: boolean;
+    /** Canvas color drawn behind image pages */
+    backgroundColor: string;
     /** Flipping animation time */
     flippingTime: number;
 
@@ -89,6 +91,7 @@ export class Settings {
         minHeight: 0,
         maxHeight: 0,
         drawShadow: true,
+        backgroundColor: '#ffffff',
         flippingTime: 1000,
         usePortrait: true,
         startZIndex: 0,
@@ -136,6 +139,8 @@ export class Settings {
         if (result.width <= 0 || result.height <= 0) throw new Error('Invalid width or height');
 
         if (result.flippingTime <= 0) throw new Error('Invalid flipping time');
+
+        if (result.backgroundColor.trim() === '') throw new Error('Invalid background color');
 
         if (result.size === SizeType.STRETCH) {
             if (result.minWidth <= 0) result.minWidth = 100;

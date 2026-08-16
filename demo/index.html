@@ -178,6 +178,8 @@
                     maxHeight: 840,
                     usePortrait: true,
                     flippingTime: 120,
+                    backgroundColor: '#123456',
+                    drawShadow: false,
                 });
                 book.loadFromImages(Array.from({ length: 5 }, (_, index) => makeSvgPage(index)));
                 return book;
