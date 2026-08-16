@@ -141,10 +141,11 @@
                 return book;
             };
 
-            window.demoBooks = {
+            window.resetDemoBooks = () => ({
                 ltr: createBook('ltr', ReadingDirection.LTR),
                 rtl: createBook('rtl', ReadingDirection.RTL),
-            };
+            });
+            window.demoBooks = window.resetDemoBooks();
 
             document.addEventListener('click', (event) => {
                 const button = event.target.closest('[data-action]');

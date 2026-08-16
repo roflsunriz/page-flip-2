@@ -121,6 +121,22 @@ await command('Emulation.setDeviceMetricsOverride', {
 await Bun.sleep(100);
 const mobile = await inspect();
 
+const destroyed = await evaluate(`(() => {
+    window.demoBooks.ltr.destroy();
+    window.demoBooks.rtl.destroy();
+    return Object.fromEntries(['ltr', 'rtl'].map((key) => {
+        const root = document.querySelector('[data-book="' + key + '"]');
+        return [key, {
+            connected: root.isConnected,
+            directPages: root.querySelectorAll(':scope > [data-page]').length,
+            generatedNodes: root.querySelectorAll('.page-flip-2__wrapper, .page-flip-2__item').length,
+        }];
+    }));
+})()`);
+await evaluate('(() => { window.demoBooks = window.resetDemoBooks(); })()');
+await Bun.sleep(100);
+const reinitialized = await inspect();
+
 const assertions = [
     [desktop.styleCount === 1, 'bundle styles must be injected exactly once'],
     [desktop.overflow === false, 'desktop must not overflow horizontally'],
@@ -139,6 +155,19 @@ const assertions = [
     [mobile.books.rtl.orientation === 'portrait', 'RTL must switch to portrait on mobile'],
     [mobile.books.ltr.pageClasses[2].includes('--right'), 'LTR portrait must use the right half'],
     [mobile.books.rtl.pageClasses[2].includes('--left'), 'RTL portrait must use the left half'],
+    [destroyed.ltr.connected && destroyed.rtl.connected, 'destroy must retain caller-owned roots'],
+    [
+        destroyed.ltr.directPages === 5 && destroyed.rtl.directPages === 5,
+        'destroy must restore source pages',
+    ],
+    [
+        destroyed.ltr.generatedNodes === 0 && destroyed.rtl.generatedNodes === 0,
+        'destroy must remove generated DOM',
+    ],
+    [
+        reinitialized.books.ltr.currentPage === 0 && reinitialized.books.rtl.currentPage === 0,
+        'destroyed roots must support reinitialization',
+    ],
     [browserErrors.length === 0, `browser errors: ${browserErrors.join('; ')}`],
 ];
 
@@ -148,7 +177,13 @@ socket.close();
 await fetch(`${cdpBaseUrl}/json/close/${target.id}`);
 
 if (failures.length > 0) {
-    console.error(JSON.stringify({ desktop, afterTurn, mobile, browserErrors }, null, 2));
+    console.error(
+        JSON.stringify(
+            { desktop, afterTurn, mobile, destroyed, reinitialized, browserErrors },
+            null,
+            2,
+        ),
+    );
     throw new Error(`Browser smoke test failed:\n- ${failures.join('\n- ')}`);
 }
 

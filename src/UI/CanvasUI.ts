@@ -13,7 +13,7 @@ export class CanvasUI extends UI {
 
         this.wrapper.innerHTML = '<canvas class="page-flip-2__canvas"></canvas>';
 
-        this.canvas = inBlock.querySelectorAll('canvas')[0];
+        this.canvas = this.wrapper.querySelector('canvas');
 
         this.distElement = this.canvas;
 

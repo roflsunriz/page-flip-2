@@ -34,6 +34,8 @@ export class PageFlip extends EventObject {
     private render: Render;
 
     private ui: UI;
+    private isDestroyed = false;
+    private initTimeoutId: number = null;
 
     /**
      * Create a new PageFlip instance
@@ -50,11 +52,16 @@ export class PageFlip extends EventObject {
     }
 
     /**
-     * Destructor. Remove a root HTML element and all event handlers
+     * Destructor. Restore the root HTML element and remove all event handlers
      */
     public destroy(): void {
-        this.ui.destroy();
-        this.block.remove();
+        if (this.isDestroyed) return;
+
+        if (this.initTimeoutId !== null) window.clearTimeout(this.initTimeoutId);
+        this.render?.stop();
+        this.ui?.destroy();
+        this.pages?.destroy();
+        this.isDestroyed = true;
     }
 
     /**
@@ -86,7 +93,8 @@ export class PageFlip extends EventObject {
         this.pages.show(this.setting.startPage);
 
         // safari fix
-        setTimeout(() => {
+        this.initTimeoutId = window.setTimeout(() => {
+            this.initTimeoutId = null;
             this.ui.update();
             this.trigger('init', this, {
                 page: this.setting.startPage,
@@ -116,7 +124,8 @@ export class PageFlip extends EventObject {
         this.pages.show(this.setting.startPage);
 
         // safari fix
-        setTimeout(() => {
+        this.initTimeoutId = window.setTimeout(() => {
+            this.initTimeoutId = null;
             this.ui.update();
             this.trigger('init', this, {
                 page: this.setting.startPage,
@@ -136,9 +145,9 @@ export class PageFlip extends EventObject {
         this.pages = new ImagePageCollection(this, this.render, imagesHref);
         this.pages.load();
 
-        this.pages.show(current);
+        this.pages.show(Math.min(current, Math.max(0, imagesHref.length - 1)));
         this.trigger('update', this, {
-            page: current,
+            page: this.getCurrentPageIndex(),
             mode: this.render.getOrientation(),
         });
     }
@@ -153,14 +162,14 @@ export class PageFlip extends EventObject {
         const pageItems = Array.from(items);
 
         this.pages.destroy();
+        (this.ui as HTMLUI).updateItems(pageItems);
         this.pages = new HTMLPageCollection(this, this.render, this.ui.getDistElement(), pageItems);
         this.pages.load();
-        (this.ui as HTMLUI).updateItems(pageItems);
         this.render.reload();
 
-        this.pages.show(current);
+        this.pages.show(Math.min(current, Math.max(0, pageItems.length - 1)));
         this.trigger('update', this, {
-            page: current,
+            page: this.getCurrentPageIndex(),
             mode: this.render.getOrientation(),
         });
     }

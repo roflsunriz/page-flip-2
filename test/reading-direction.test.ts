@@ -58,7 +58,7 @@ describe('reading direction', () => {
     it('keeps logical pages in left-to-right physical order for LTR', () => {
         const { book, pages, root } = createBook(ReadingDirection.LTR);
 
-        expect(root.dataset['pageFlip2ReadingDirection']).toBe('ltr');
+        expect(root.getAttribute('data-page-flip-2-reading-direction')).toBe('ltr');
         expect(pages[0].classList).toContain('--left');
         expect(pages[1].classList).toContain('--right');
         expect(book.getCurrentPageIndex()).toBe(0);
@@ -79,7 +79,7 @@ describe('reading direction', () => {
             .getPages()
             .map((page) => getLogicalIndex(page as HTMLPage));
 
-        expect(root.dataset['pageFlip2ReadingDirection']).toBe('rtl');
+        expect(root.getAttribute('data-page-flip-2-reading-direction')).toBe('rtl');
         expect(internalOrder).toEqual(['0', '1', '2', '3']);
         expect(pages[0].classList).toContain('--right');
         expect(pages[1].classList).toContain('--left');

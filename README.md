@@ -57,6 +57,8 @@ const pageFlip = new PageFlip(root, {
 pageFlip.loadFromHTML(document.querySelectorAll<HTMLElement>('[data-page-flip-2-page]'));
 ```
 
+`pageFlip.destroy()` は生成したDOM、イベント、描画ループを破棄し、渡されたroot要素とHTMLページを初期状態へ戻します。同じrootへ新しいインスタンスを作り直せます。
+
 公開APIは実装の進行に合わせて更新します。未実装のオプションをREADMEへ先行掲載しません。
 
 ## ライセンスと由来

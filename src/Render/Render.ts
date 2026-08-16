@@ -79,6 +79,8 @@ export abstract class Render {
     protected pageRect: RectPoints = null;
     /** Current book area */
     private boundsRect: PageRect = null;
+    private animationFrameId: number = null;
+    private isRunning = false;
 
     /** Timer started from start of rendering */
     protected timer = 0;
@@ -137,14 +139,28 @@ export abstract class Render {
      * Running requestAnimationFrame, and rendering process
      */
     public start(): void {
+        if (this.isRunning) return;
+
+        this.isRunning = true;
         this.update();
 
         const loop = (timer: number): void => {
+            if (!this.isRunning) return;
+
             this.render(timer);
-            requestAnimationFrame(loop);
+            this.animationFrameId = requestAnimationFrame(loop);
         };
 
-        requestAnimationFrame(loop);
+        this.animationFrameId = requestAnimationFrame(loop);
+    }
+
+    public stop(): void {
+        this.isRunning = false;
+        if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId);
+
+        this.animationFrameId = null;
+        this.animation = null;
+        this.shadow = null;
     }
 
     /**

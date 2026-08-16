@@ -9,6 +9,11 @@ type SwipeData = {
     time: number;
 };
 
+type InlineStyleState = {
+    priority: string;
+    value: string;
+};
+
 /**
  * UI Class, represents work with DOM
  */
@@ -22,6 +27,10 @@ export abstract class UI {
     private touchPoint: SwipeData = null;
     private readonly swipeTimeout = 250;
     private readonly swipeDistance: number;
+    private readonly initialDirectionAttribute: string | null;
+    private readonly initiallyHadParentClass: boolean;
+    private readonly initialInlineStyles = new Map<string, InlineStyleState>();
+    private touchTimeoutId: number = null;
 
     private onResize = (): void => {
         this.app.update();
@@ -36,13 +45,22 @@ export abstract class UI {
      */
     protected constructor(inBlock: HTMLElement, app: PageFlip, setting: FlipSetting) {
         this.parentElement = inBlock;
+        this.initiallyHadParentClass = inBlock.classList.contains('page-flip-2__parent');
+        this.initialDirectionAttribute = inBlock.getAttribute('data-page-flip-2-reading-direction');
+
+        for (const property of ['min-width', 'min-height', 'width', 'max-width', 'display']) {
+            this.initialInlineStyles.set(property, {
+                value: inBlock.style.getPropertyValue(property),
+                priority: inBlock.style.getPropertyPriority(property),
+            });
+        }
 
         inBlock.classList.add('page-flip-2__parent');
-        inBlock.dataset['pageFlip2ReadingDirection'] = setting.readingDirection;
-        // Add first wrapper
-        inBlock.insertAdjacentHTML('afterbegin', '<div class="page-flip-2__wrapper"></div>');
+        inBlock.setAttribute('data-page-flip-2-reading-direction', setting.readingDirection);
 
-        this.wrapper = inBlock.querySelector('.page-flip-2__wrapper');
+        this.wrapper = document.createElement('div');
+        this.wrapper.className = 'page-flip-2__wrapper';
+        inBlock.prepend(this.wrapper);
 
         this.app = app;
 
@@ -64,7 +82,6 @@ export abstract class UI {
 
         inBlock.style.display = 'block';
 
-        window.addEventListener('resize', this.onResize, false);
         this.swipeDistance = setting.swipeDistance;
     }
 
@@ -72,10 +89,28 @@ export abstract class UI {
      * Destructor. Remove all HTML elements and all event handlers
      */
     public destroy(): void {
-        if (this.app.getSettings().useMouseEvents) this.removeHandlers();
+        this.removeHandlers();
+        if (this.touchTimeoutId !== null) window.clearTimeout(this.touchTimeoutId);
 
         this.distElement.remove();
         this.wrapper.remove();
+        if (!this.initiallyHadParentClass) {
+            this.parentElement.classList.remove('page-flip-2__parent');
+        }
+
+        for (const [property, state] of this.initialInlineStyles) {
+            if (state.value === '') this.parentElement.style.removeProperty(property);
+            else this.parentElement.style.setProperty(property, state.value, state.priority);
+        }
+
+        if (this.initialDirectionAttribute === null) {
+            this.parentElement.removeAttribute('data-page-flip-2-reading-direction');
+        } else {
+            this.parentElement.setAttribute(
+                'data-page-flip-2-reading-direction',
+                this.initialDirectionAttribute,
+            );
+        }
     }
 
     /**
@@ -199,7 +234,8 @@ export abstract class UI {
                 };
 
                 // part of swipe detection
-                setTimeout(() => {
+                this.touchTimeoutId = window.setTimeout(() => {
+                    this.touchTimeoutId = null;
                     if (this.touchPoint !== null) {
                         this.app.startUserTouch(pos);
                     }
@@ -247,6 +283,11 @@ export abstract class UI {
     };
 
     private onTouchEnd = (e: TouchEvent): void => {
+        if (this.touchTimeoutId !== null) {
+            window.clearTimeout(this.touchTimeoutId);
+            this.touchTimeoutId = null;
+        }
+
         if (e.changedTouches.length > 0) {
             const t = e.changedTouches[0];
             const pos = this.getMousePos(t.clientX, t.clientY);
