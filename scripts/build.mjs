@@ -19,7 +19,7 @@ const cssInjectionPlugin = {
                     const selector = 'style[data-page-flip-2-styles]';
                     if (document.head.querySelector(selector) === null) {
                         const style = document.createElement('style');
-                        style.dataset.pageFlip2Styles = '';
+                        style.setAttribute('data-page-flip-2-styles', '');
                         style.textContent = css;
                         document.head.append(style);
                     }
