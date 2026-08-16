@@ -17,6 +17,7 @@
 - 重複していたRollup・Webpack経路を廃止し、JavaScriptのbundle生成を `Bun.build()` に一本化した。
 - テスト実行をVitestからBun標準ランナーへ移し、DOM環境をJSDOMへ変更した。
 - DOMクラス名を `page-flip-2__*` へ統一した。
+- package作成前にBunビルドを必ず再実行し、全品質検査を1コマンドで実行できるリリース経路へ変更した。
 
 ### Fixed
 
