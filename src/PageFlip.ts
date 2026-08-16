@@ -90,14 +90,14 @@ export class PageFlip extends EventObject {
 
         this.render.start();
 
-        this.pages.show(this.setting.startPage);
+        this.showConfiguredStartPage();
 
         // safari fix
         this.initTimeoutId = window.setTimeout(() => {
             this.initTimeoutId = null;
             this.ui.update();
             this.trigger('init', this, {
-                page: this.setting.startPage,
+                page: this.getCurrentPageIndex(),
                 mode: this.render.getOrientation(),
             });
         }, 1);
@@ -121,14 +121,14 @@ export class PageFlip extends EventObject {
 
         this.render.start();
 
-        this.pages.show(this.setting.startPage);
+        this.showConfiguredStartPage();
 
         // safari fix
         this.initTimeoutId = window.setTimeout(() => {
             this.initTimeoutId = null;
             this.ui.update();
             this.trigger('init', this, {
-                page: this.setting.startPage,
+                page: this.getCurrentPageIndex(),
                 mode: this.render.getOrientation(),
             });
         }, 1);
@@ -289,6 +289,14 @@ export class PageFlip extends EventObject {
      */
     public getPage(pageIndex: number): Page {
         return this.pages.getPage(pageIndex);
+    }
+
+    private showConfiguredStartPage(): void {
+        const lastPage = Math.max(0, this.pages.getPageCount() - 1);
+        const requestedPage = Number.isFinite(this.setting.startPage)
+            ? Math.trunc(this.setting.startPage)
+            : 0;
+        this.pages.show(Math.min(Math.max(0, requestedPage), lastPage));
     }
 
     public isRtl(): boolean {

@@ -149,6 +149,30 @@ describe('reading direction', () => {
         book.destroy();
     });
 
+    it('reports the displayed spread when startPage points inside or beyond it', () => {
+        const root = document.createElement('div');
+        const pages = Array.from({ length: 4 }, () => document.createElement('div'));
+        root.append(...pages);
+        document.body.append(root);
+
+        const initializedPages: number[] = [];
+        const book = new PageFlip(root, {
+            width: 400,
+            height: 600,
+            usePortrait: false,
+            readingDirection: ReadingDirection.RTL,
+            startPage: 99,
+        });
+        book.on('init', ({ data }) => initializedPages.push((data as { page: number }).page));
+        book.loadFromHTML(pages);
+        jest.runOnlyPendingTimers();
+
+        expect(book.getCurrentPageIndex()).toBe(2);
+        expect(initializedPages).toEqual([2]);
+
+        book.destroy();
+    });
+
     it('maps logical animated turns to the correct physical edge', () => {
         const ltr = createBook(ReadingDirection.LTR).book;
         const ltrController = ltr.getFlipController();
