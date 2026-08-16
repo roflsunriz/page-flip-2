@@ -2,7 +2,7 @@ import { PageFlip } from '../PageFlip';
 import { Point, PageRect, RectPoints } from '../BasicTypes';
 import { FlipDirection } from '../Flip/Flip';
 import { Page, PageOrientation } from '../Page/Page';
-import { FlipSetting, SizeType } from '../Settings';
+import { DisplayMode, FlipSetting, SizeType } from '../Settings';
 
 type FrameAction = () => void;
 type AnimationSuccessAction = () => void;
@@ -230,8 +230,6 @@ export abstract class Render {
      * Calculate the size and position of the book depending on the parent element and configuration parameters
      */
     private calculateBoundsRect(): Orientation {
-        let orientation = Orientation.LANDSCAPE;
-
         const blockWidth = this.getBlockWidth();
         const middlePoint: Point = {
             x: blockWidth / 2,
@@ -242,12 +240,19 @@ export abstract class Render {
 
         let pageWidth = this.setting.width;
         let pageHeight = this.setting.height;
-
-        let left = middlePoint.x - pageWidth;
+        let orientation =
+            this.setting.displayMode === DisplayMode.PORTRAIT
+                ? Orientation.PORTRAIT
+                : Orientation.LANDSCAPE;
 
         if (this.setting.size === SizeType.STRETCH) {
-            if (blockWidth < this.setting.minWidth * 2 && this.app.getSettings().usePortrait)
+            if (
+                this.setting.displayMode === DisplayMode.AUTO &&
+                blockWidth < this.setting.minWidth * 2 &&
+                this.app.getSettings().usePortrait
+            ) {
                 orientation = Orientation.PORTRAIT;
+            }
 
             pageWidth =
                 orientation === Orientation.PORTRAIT
@@ -261,19 +266,18 @@ export abstract class Render {
                 pageHeight = this.getBlockHeight();
                 pageWidth = pageHeight * ratio;
             }
-
-            left =
-                orientation === Orientation.PORTRAIT
-                    ? middlePoint.x - pageWidth / 2 - (this.app.isRtl() ? 0 : pageWidth)
-                    : middlePoint.x - pageWidth;
-        } else {
-            if (blockWidth < pageWidth * 2) {
-                if (this.app.getSettings().usePortrait) {
-                    orientation = Orientation.PORTRAIT;
-                    left = middlePoint.x - pageWidth / 2 - (this.app.isRtl() ? 0 : pageWidth);
-                }
-            }
+        } else if (
+            this.setting.displayMode === DisplayMode.AUTO &&
+            blockWidth < pageWidth * 2 &&
+            this.app.getSettings().usePortrait
+        ) {
+            orientation = Orientation.PORTRAIT;
         }
+
+        const left =
+            orientation === Orientation.PORTRAIT
+                ? middlePoint.x - pageWidth / 2 - (this.app.isRtl() ? 0 : pageWidth)
+                : middlePoint.x - pageWidth;
 
         this.boundsRect = {
             left,

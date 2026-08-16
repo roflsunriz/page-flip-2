@@ -22,6 +22,14 @@ export const CoverDensity = {
 
 export type CoverDensity = (typeof CoverDensity)[keyof typeof CoverDensity];
 
+export const DisplayMode = {
+    AUTO: 'auto',
+    LANDSCAPE: 'landscape',
+    PORTRAIT: 'portrait',
+} as const;
+
+export type DisplayMode = (typeof DisplayMode)[keyof typeof DisplayMode];
+
 /**
  * Configuration object
  */
@@ -50,6 +58,8 @@ export interface FlipSetting {
 
     /** Enable switching to portrait mode */
     usePortrait: boolean;
+    /** Automatically choose or explicitly lock the displayed page count */
+    displayMode: DisplayMode;
     /** Initial value to z-index */
     startZIndex: number;
     /** If this value is true, the parent element will be equal to the size of the book */
@@ -94,6 +104,7 @@ export class Settings {
         backgroundColor: '#ffffff',
         flippingTime: 1000,
         usePortrait: true,
+        displayMode: DisplayMode.AUTO,
         startZIndex: 0,
         autoSize: true,
         maxShadowOpacity: 1,
@@ -134,6 +145,12 @@ export class Settings {
             result.coverDensity !== CoverDensity.HARD
         ) {
             throw new Error('Invalid cover density. Available only "soft" and "hard" values');
+        }
+
+        if (!Object.values(DisplayMode).includes(result.displayMode)) {
+            throw new Error(
+                'Invalid display mode. Available only "auto", "landscape" and "portrait" values',
+            );
         }
 
         if (result.width <= 0 || result.height <= 0) throw new Error('Invalid width or height');

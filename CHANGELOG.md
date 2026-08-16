@@ -14,6 +14,7 @@
 
 - 単独表示の表紙を雑誌のように柔らかくめくれるよう、`showCover` の配置を維持したまま表紙密度を選べる `coverDensity: 'hard' | 'soft'` を追加した。
 - Canvas画像ページの余白を表示先へ合わせられるよう、背景色を指定する `backgroundColor` を追加した。
+- 端末幅に左右されず片面または見開きを維持できるよう、`displayMode: 'auto' | 'portrait' | 'landscape'` を追加した。
 
 ### Changed
 

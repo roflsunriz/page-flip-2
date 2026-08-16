@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import { CoverDensity, ReadingDirection, Settings, SizeType } from '../src/Settings';
+import { CoverDensity, DisplayMode, ReadingDirection, Settings, SizeType } from '../src/Settings';
 
 describe('Settings', () => {
     it('derives fixed bounds from the requested page size', () => {
@@ -98,5 +98,21 @@ describe('Settings', () => {
         expect(() =>
             settings.getSettings({ width: 400, height: 600, backgroundColor: '   ' }),
         ).toThrow('Invalid background color');
+    });
+
+    it('validates explicit display modes', () => {
+        const settings = new Settings();
+
+        expect(
+            settings.getSettings({ width: 400, height: 600, displayMode: DisplayMode.PORTRAIT })
+                .displayMode,
+        ).toBe(DisplayMode.PORTRAIT);
+        expect(() =>
+            settings.getSettings({
+                width: 400,
+                height: 600,
+                displayMode: 'square' as DisplayMode,
+            }),
+        ).toThrow('Invalid display mode');
     });
 });

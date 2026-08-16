@@ -63,6 +63,8 @@ pageFlip.loadFromHTML(document.querySelectorAll<HTMLElement>('[data-page-flip-2-
 
 Canvas画像モードの余白色は `backgroundColor` で指定できます。`drawShadow: false` はめくり中の影に加えて中央の綴じ影も無効にします。
 
+表示を常に片面または見開きへ固定する場合は `displayMode: 'portrait' | 'landscape'` を使います。既定の `'auto'` では `usePortrait` と表示幅から自動選択します。
+
 `pageFlip.destroy()` は生成したDOM、イベント、描画ループを破棄し、渡されたroot要素とHTMLページを初期状態へ戻します。同じrootへ新しいインスタンスを作り直せます。
 
 イベントのdataは型引数で指定できます。`on()` は同じインスタンスを返すため、登録を連結できます。

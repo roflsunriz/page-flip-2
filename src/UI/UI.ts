@@ -1,6 +1,6 @@
 import { PageFlip } from '../PageFlip';
 import { Point } from '../BasicTypes';
-import { FlipSetting, ReadingDirection, SizeType } from '../Settings';
+import { DisplayMode, FlipSetting, ReadingDirection, SizeType } from '../Settings';
 import { FlipCorner, FlippingState } from '../Flip/Flip';
 import { Orientation } from '../Render/Render';
 
@@ -70,7 +70,11 @@ export abstract class UI {
 
         this.app = app;
 
-        const k = this.app.getSettings().usePortrait ? 1 : 2;
+        const k =
+            setting.displayMode === DisplayMode.PORTRAIT ||
+            (setting.displayMode === DisplayMode.AUTO && setting.usePortrait)
+                ? 1
+                : 2;
 
         // Setting block sizes based on configuration
         inBlock.style.minWidth = setting.minWidth * k + 'px';

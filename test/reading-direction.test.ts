@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest, mock, spyOn } from 'bun:test';
 
-import { CoverDensity, PageFlip, ReadingDirection } from '../src';
+import { CoverDensity, DisplayMode, PageFlip, ReadingDirection } from '../src';
 import type { HTMLPage } from '../src/Page/HTMLPage';
 import { PageDensity } from '../src/Page/Page';
 import { Orientation } from '../src/Render/Render';
@@ -170,6 +170,28 @@ describe('reading direction', () => {
         expect(pages[1].classList).toContain('--left');
 
         book.destroy();
+    });
+
+    it('can lock portrait or landscape independently of responsive switching', () => {
+        const portraitRoot = document.createElement('div');
+        const portraitPages = Array.from({ length: 4 }, () => document.createElement('div'));
+        portraitRoot.append(...portraitPages);
+        document.body.append(portraitRoot);
+        const forcedPortrait = new PageFlip(portraitRoot, {
+            width: 400,
+            height: 600,
+            usePortrait: false,
+            displayMode: DisplayMode.PORTRAIT,
+        });
+        forcedPortrait.loadFromHTML(portraitPages);
+        expect(forcedPortrait.getOrientation()).toBe(Orientation.PORTRAIT);
+        forcedPortrait.destroy();
+
+        const forcedLandscape = createBook(ReadingDirection.LTR, 4, true).book;
+        forcedLandscape.getSettings().displayMode = DisplayMode.LANDSCAPE;
+        forcedLandscape.update();
+        expect(forcedLandscape.getOrientation()).toBe(Orientation.LANDSCAPE);
+        forcedLandscape.destroy();
     });
 
     it('reports logical page indices from RTL flip events', () => {
