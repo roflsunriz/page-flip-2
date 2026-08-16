@@ -33,3 +33,4 @@
 - `startPage` が見開きの途中やページ範囲外を指す場合、実際の表示spreadと `init` イベントのページ番号が一致しない問題を修正した。
 - windowのresizeを伴わない親要素の寸法変更へ追従できるよう、内部の `ResizeObserver` で再描画するようにした。
 - ページ内容やめくり途中の面がwrapper外へはみ出さないよう、生成DOMのclip境界を明示した。
+- Canvasのportrait clipがフレーム間で累積し、初回描画やlandscape復帰時に残像が生じうる問題を修正した。

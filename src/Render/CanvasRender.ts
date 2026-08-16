@@ -28,6 +28,19 @@ export class CanvasRender extends Render {
 
     protected drawFrame(): void {
         this.clear();
+        this.ctx.save();
+
+        const rect = this.getRect();
+        if (this.orientation === Orientation.PORTRAIT) {
+            this.ctx.beginPath();
+            this.ctx.rect(
+                this.app.isRtl() ? rect.left : rect.left + rect.pageWidth,
+                rect.top,
+                rect.pageWidth,
+                rect.height,
+            );
+            this.ctx.clip();
+        }
 
         if (this.orientation !== Orientation.PORTRAIT || this.app.isRtl())
             if (this.leftPage != null) this.leftPage.simpleDraw(PageOrientation.LEFT);
@@ -45,18 +58,7 @@ export class CanvasRender extends Render {
             this.drawInnerShadow();
         }
 
-        const rect = this.getRect();
-
-        if (this.orientation === Orientation.PORTRAIT) {
-            this.ctx.beginPath();
-            this.ctx.rect(
-                this.app.isRtl() ? rect.left : rect.left + rect.pageWidth,
-                rect.top,
-                rect.pageWidth,
-                rect.height,
-            );
-            this.ctx.clip();
-        }
+        this.ctx.restore();
     }
 
     private drawBookShadow(): void {

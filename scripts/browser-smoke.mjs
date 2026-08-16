@@ -85,6 +85,11 @@ const inspect = () =>
                 pageClasses: pages.map((page) => [...page.classList]),
             }];
         })),
+        canvas: {
+            currentPage: window.canvasBook.getCurrentPageIndex(),
+            orientation: window.canvasBook.getOrientation(),
+            canvasCount: document.querySelectorAll('[data-canvas-book] canvas').length,
+        },
     }))()`);
 
 await command('Runtime.enable');
@@ -114,6 +119,7 @@ await Bun.sleep(100);
 await evaluate(`(() => {
     document.querySelector('[data-action="next"][data-target="ltr"]').click();
     document.querySelector('[data-action="next"][data-target="rtl"]').click();
+    window.canvasBook.flipNext();
 })()`);
 await Bun.sleep(400);
 const afterTurn = await inspect();
@@ -130,7 +136,8 @@ const mobile = await inspect();
 const destroyed = await evaluate(`(() => {
     window.demoBooks.ltr.destroy();
     window.demoBooks.rtl.destroy();
-    return Object.fromEntries(['ltr', 'rtl'].map((key) => {
+    window.canvasBook.destroy();
+    const books = Object.fromEntries(['ltr', 'rtl'].map((key) => {
         const root = document.querySelector('[data-book="' + key + '"]');
         return [key, {
             connected: root.isConnected,
@@ -138,8 +145,17 @@ const destroyed = await evaluate(`(() => {
             generatedNodes: root.querySelectorAll('.page-flip-2__wrapper, .page-flip-2__item').length,
         }];
     }));
+    const canvasRoot = document.querySelector('[data-canvas-book]');
+    return {
+        ...books,
+        canvas: {
+            connected: canvasRoot.isConnected,
+            canvasCount: canvasRoot.querySelectorAll('canvas').length,
+        },
+    };
 })()`);
 await evaluate('(() => { window.demoBooks = window.resetDemoBooks(); })()');
+await evaluate('(() => { window.canvasBook = window.resetCanvasBook(); })()');
 await Bun.sleep(100);
 const reinitialized = await inspect();
 
@@ -148,6 +164,8 @@ const assertions = [
     [desktop.overflow === false, 'desktop must not overflow horizontally'],
     [desktop.books.ltr.currentPage === 0, 'LTR must start at logical page 0'],
     [desktop.books.rtl.currentPage === 0, 'RTL must start at logical page 0'],
+    [desktop.canvas.currentPage === 0, 'Canvas RTL must start at logical page 0'],
+    [desktop.canvas.canvasCount === 1, 'Canvas mode must create one canvas'],
     [desktop.books.ltr.pageClasses[0].includes('--left'), 'LTR page 0 must be on the left'],
     [desktop.books.rtl.pageClasses[0].includes('--right'), 'RTL page 0 must be on the right'],
     [
@@ -156,6 +174,7 @@ const assertions = [
     ],
     [afterTurn.books.ltr.currentPage === 2, 'LTR next must advance to logical page 2'],
     [afterTurn.books.rtl.currentPage === 2, 'RTL next must advance to logical page 2'],
+    [afterTurn.canvas.currentPage === 2, 'Canvas RTL next must advance to logical page 2'],
     [
         afterTurn.books.rtl.pageClasses.slice(2, 4).every((classes) => classes.includes('--soft')),
         'RTL animation must restore soft-page density',
@@ -163,6 +182,7 @@ const assertions = [
     [mobile.overflow === false, 'mobile must not overflow horizontally'],
     [mobile.books.ltr.orientation === 'portrait', 'LTR must switch to portrait on mobile'],
     [mobile.books.rtl.orientation === 'portrait', 'RTL must switch to portrait on mobile'],
+    [mobile.canvas.orientation === 'portrait', 'Canvas RTL must switch to portrait on mobile'],
     [mobile.books.ltr.pageClasses[2].includes('--right'), 'LTR portrait must use the right half'],
     [mobile.books.rtl.pageClasses[2].includes('--left'), 'RTL portrait must use the left half'],
     [destroyed.ltr.connected && destroyed.rtl.connected, 'destroy must retain caller-owned roots'],
@@ -175,9 +195,14 @@ const assertions = [
         'destroy must remove generated DOM',
     ],
     [
+        destroyed.canvas.connected && destroyed.canvas.canvasCount === 0,
+        'Canvas destroy must retain its root and remove generated canvas',
+    ],
+    [
         reinitialized.books.ltr.currentPage === 0 && reinitialized.books.rtl.currentPage === 0,
         'destroyed roots must support reinitialization',
     ],
+    [reinitialized.canvas.currentPage === 0, 'Canvas root must support reinitialization'],
     [browserErrors.length === 0, `browser errors: ${browserErrors.join('; ')}`],
 ];
 
