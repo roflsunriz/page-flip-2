@@ -42,6 +42,13 @@ bun run release:check
 
 ブラウザ挙動を変更した場合は、HTMLページと画像ページの両モードについてLTR/RTL、横長・縦長、リサイズ、連続操作、更新、破棄を実ブラウザで確認する。
 
+## 上流Issue / PRの再監査
+
+1. `Nodlik/StPageFlip` のIssueとPRをGitHub APIで `state=all` として取得する。
+2. [docs/upstream-audit.md](docs/upstream-audit.md) の番号一覧と比較し、新規・更新項目の本文、コメント、PR差分を確認する。
+3. 再現可能で後方互換な修正は回帰テストとともに取り込み、既取込または対象外なら根拠を監査表へ追記する。
+4. 上流PRのbuild設定を取り込む場合も、RollupやWebpackへ戻さず `Bun.build()` の単一経路を維持する。
+
 ## リリース
 
 1. `package.json` のversionと `CHANGELOG.md` の見出し・日付を一致させる。

@@ -79,6 +79,10 @@ pageFlip
 
 パッケージ入口から `FlipCorner`、`FlipDirection`、`FlippingState`、`Orientation`、`PageDensity`、`PageOrientation` と、イベント関連の型をimportできます。
 
+## 上流Issue / PRの監査
+
+上流へ報告された項目の取込状況と、対象外にした理由は [docs/upstream-audit.md](docs/upstream-audit.md) に全件記録しています。
+
 ## ライセンスと由来
 
 MIT Licenseです。原著作者の著作権表示とライセンス全文は [LICENSE](./LICENSE) に保持しています。
