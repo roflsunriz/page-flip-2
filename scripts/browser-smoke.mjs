@@ -86,6 +86,9 @@ const inspect = () =>
                 state: book.getState(),
                 orientation: book.getOrientation(),
                 root: root.getBoundingClientRect().toJSON(),
+                wrapper: root.querySelector('.page-flip-2__wrapper').getBoundingClientRect().toJSON(),
+                block: root.querySelector('.page-flip-2__block').getBoundingClientRect().toJSON(),
+                renderRect: book.getRender().getRect(),
                 pageClasses: pages.map((page) => [...page.classList]),
                 pageDensities: book.getPageCollection().getPages().map((page) => ({
                     created: page.getDensity(),
@@ -122,6 +125,20 @@ await evaluate(`document.querySelector('[data-book="ltr"]').style.width = '300px
 await Bun.sleep(100);
 const containerResized = await inspect();
 await evaluate(`document.querySelector('[data-book="ltr"]').style.width = '100%'`);
+await Bun.sleep(100);
+
+await evaluate(`(() => {
+    const root = document.querySelector('[data-book="ltr"]');
+    root.style.width = '420px';
+    root.style.height = '260px';
+})()`);
+await Bun.sleep(100);
+const heightConstrained = await inspect();
+await evaluate(`(() => {
+    const root = document.querySelector('[data-book="ltr"]');
+    root.style.width = '100%';
+    root.style.removeProperty('height');
+})()`);
 await Bun.sleep(100);
 
 await evaluate(`(() => {
@@ -205,6 +222,13 @@ const assertions = [
         containerResized.books.ltr.orientation === 'portrait',
         'container-only resize must update orientation',
     ],
+    [
+        heightConstrained.books.ltr.wrapper.height <= heightConstrained.books.ltr.root.height &&
+            heightConstrained.books.ltr.block.height <= heightConstrained.books.ltr.root.height &&
+            heightConstrained.books.ltr.renderRect.height <=
+                heightConstrained.books.ltr.root.height,
+        'height-constrained books must stay within the current root height',
+    ],
     [afterTurn.books.ltr.currentPage === 2, 'LTR next must advance to logical page 2'],
     [afterTurn.books.rtl.currentPage === 2, 'RTL next must advance to logical page 2'],
     [afterTurn.canvas.currentPage === 2, 'Canvas RTL next must advance to logical page 2'],
@@ -260,6 +284,7 @@ if (failures.length > 0) {
             {
                 desktop,
                 containerResized,
+                heightConstrained,
                 afterTurn,
                 ltrFinalHover,
                 rtlFinalHover,

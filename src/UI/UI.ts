@@ -155,20 +155,17 @@ export abstract class UI {
     public setOrientationStyle(orientation: Orientation): void {
         this.wrapper.classList.remove('--portrait', '--landscape');
 
-        if (orientation === Orientation.PORTRAIT) {
-            if (this.app.getSettings().autoSize)
-                this.wrapper.style.paddingBottom =
-                    (this.app.getSettings().height / this.app.getSettings().width) * 100 + '%';
-
-            this.wrapper.classList.add('--portrait');
-        } else {
-            if (this.app.getSettings().autoSize)
-                this.wrapper.style.paddingBottom =
-                    (this.app.getSettings().height / (this.app.getSettings().width * 2)) * 100 +
-                    '%';
-
-            this.wrapper.classList.add('--landscape');
+        if (this.app.getSettings().autoSize) {
+            const spreadWidth =
+                orientation === Orientation.PORTRAIT
+                    ? this.app.getSettings().width
+                    : this.app.getSettings().width * 2;
+            this.wrapper.style.aspectRatio = `${spreadWidth} / ${this.app.getSettings().height}`;
         }
+
+        this.wrapper.classList.add(
+            orientation === Orientation.PORTRAIT ? '--portrait' : '--landscape',
+        );
 
         this.update();
     }

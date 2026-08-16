@@ -89,6 +89,27 @@ describe('lifecycle', () => {
         book.destroy();
     });
 
+    it('sizes an auto-sized wrapper with aspect-ratio instead of vertical padding', () => {
+        const root = document.createElement('div');
+        const pages = [document.createElement('div'), document.createElement('div')];
+        root.append(...pages);
+        document.body.append(root);
+
+        const book = new PageFlip(root, {
+            width: 700,
+            height: 1000,
+            displayMode: 'landscape',
+            autoSize: true,
+        });
+        book.loadFromHTML(pages);
+
+        const wrapper = root.querySelector<HTMLElement>('.page-flip-2__wrapper');
+        expect(wrapper?.style.aspectRatio).toBe('1400 / 1000');
+        expect(wrapper?.style.paddingBottom).toBe('');
+
+        book.destroy();
+    });
+
     it('cleans replaced pages and clamps the current spread after an update', () => {
         const root = document.createElement('div');
         const originalPages = Array.from({ length: 4 }, (_, index) => {
