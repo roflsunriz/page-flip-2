@@ -1,0 +1,6 @@
+COMMON-AGENTS.md
+node_modules/
+dist/
+.idea/
+.vscode/
+package-lock.json
