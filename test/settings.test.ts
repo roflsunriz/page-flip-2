@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 
 import { Settings, SizeType } from '../src/Settings';
 
@@ -41,4 +41,5 @@ describe('Settings', () => {
         expect(settings.minHeight).toBe(100);
         expect(settings.maxHeight).toBe(2000);
     });
+
 });
