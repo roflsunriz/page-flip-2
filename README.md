@@ -59,7 +59,17 @@ pageFlip.loadFromHTML(document.querySelectorAll<HTMLElement>('[data-page-flip-2-
 
 `pageFlip.destroy()` は生成したDOM、イベント、描画ループを破棄し、渡されたroot要素とHTMLページを初期状態へ戻します。同じrootへ新しいインスタンスを作り直せます。
 
-公開APIは実装の進行に合わせて更新します。未実装のオプションをREADMEへ先行掲載しません。
+イベントのdataは型引数で指定できます。`on()` は同じインスタンスを返すため、登録を連結できます。
+
+```ts
+pageFlip
+    .on<number>('flip', ({ data }) => console.log(`page: ${data}`))
+    .on<{ page: number; mode: 'portrait' | 'landscape' }>('init', ({ data }) => {
+        console.log(data.page, data.mode);
+    });
+```
+
+パッケージ入口から `FlipCorner`、`FlipDirection`、`FlippingState`、`Orientation`、`PageDensity`、`PageOrientation` と、イベント関連の型をimportできます。
 
 ## ライセンスと由来
 
