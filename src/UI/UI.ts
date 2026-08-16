@@ -216,14 +216,10 @@ export abstract class UI {
         };
     }
 
-    private checkTarget(targer: EventTarget): boolean {
+    private checkTarget(target: EventTarget): boolean {
         if (!this.app.getSettings().clickEventForward) return true;
 
-        if (['a', 'button'].includes((targer as HTMLElement).tagName.toLowerCase())) {
-            return false;
-        }
-
-        return true;
+        return !(target instanceof Element && target.closest('a, button') !== null);
     }
 
     private onMouseDown = (e: MouseEvent): void => {

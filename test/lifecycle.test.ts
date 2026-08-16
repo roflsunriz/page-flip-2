@@ -110,4 +110,32 @@ describe('lifecycle', () => {
             expect(page.style.color).toBe('green');
         }
     });
+
+    it('forwards nested link and button interactions without starting a page turn', () => {
+        const root = document.createElement('div');
+        const firstPage = document.createElement('div');
+        const link = document.createElement('a');
+        const linkLabel = document.createElement('span');
+        const button = document.createElement('button');
+        const buttonLabel = document.createElement('span');
+        link.append(linkLabel);
+        button.append(buttonLabel);
+        firstPage.append(link, button);
+        const secondPage = document.createElement('div');
+        root.append(firstPage, secondPage);
+        document.body.append(root);
+
+        const book = new PageFlip(root, { width: 400, height: 600 });
+        const startUserTouch = spyOn(book, 'startUserTouch');
+        book.loadFromHTML([firstPage, secondPage]);
+
+        linkLabel.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        buttonLabel.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        expect(startUserTouch).not.toHaveBeenCalled();
+
+        firstPage.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        expect(startUserTouch).toHaveBeenCalledTimes(1);
+
+        book.destroy();
+    });
 });
