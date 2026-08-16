@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import { ReadingDirection, Settings, SizeType } from '../src/Settings';
+import { CoverDensity, ReadingDirection, Settings, SizeType } from '../src/Settings';
 
 describe('Settings', () => {
     it('derives fixed bounds from the requested page size', () => {
@@ -70,5 +70,21 @@ describe('Settings', () => {
                 readingDirection: 'vertical' as ReadingDirection,
             }),
         ).toThrow('Invalid reading direction');
+    });
+
+    it('validates standalone cover density', () => {
+        const settings = new Settings();
+
+        expect(
+            settings.getSettings({ width: 400, height: 600, coverDensity: CoverDensity.SOFT })
+                .coverDensity,
+        ).toBe(CoverDensity.SOFT);
+        expect(() =>
+            settings.getSettings({
+                width: 400,
+                height: 600,
+                coverDensity: 'cardboard' as CoverDensity,
+            }),
+        ).toThrow('Invalid cover density');
     });
 });

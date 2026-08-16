@@ -15,6 +15,13 @@ export const ReadingDirection = {
 
 export type ReadingDirection = (typeof ReadingDirection)[keyof typeof ReadingDirection];
 
+export const CoverDensity = {
+    SOFT: 'soft',
+    HARD: 'hard',
+} as const;
+
+export type CoverDensity = (typeof CoverDensity)[keyof typeof CoverDensity];
+
 /**
  * Configuration object
  */
@@ -50,6 +57,8 @@ export interface FlipSetting {
 
     /** If this value is true, the first and the last pages will be marked as hard and will be shown in single page mode */
     showCover: boolean;
+    /** Rendering density used for pages placed as standalone covers */
+    coverDensity: CoverDensity;
     /** Disable content scrolling when touching a book on mobile devices */
     mobileScrollSupport: boolean;
 
@@ -86,6 +95,7 @@ export class Settings {
         autoSize: true,
         maxShadowOpacity: 1,
         showCover: false,
+        coverDensity: CoverDensity.HARD,
         mobileScrollSupport: true,
         swipeDistance: 30,
         clickEventForward: true,
@@ -114,6 +124,13 @@ export class Settings {
             result.readingDirection !== ReadingDirection.RTL
         ) {
             throw new Error('Invalid reading direction. Available only "ltr" and "rtl" values');
+        }
+
+        if (
+            result.coverDensity !== CoverDensity.SOFT &&
+            result.coverDensity !== CoverDensity.HARD
+        ) {
+            throw new Error('Invalid cover density. Available only "soft" and "hard" values');
         }
 
         if (result.width <= 0 || result.height <= 0) throw new Error('Invalid width or height');

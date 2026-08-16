@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest, mock, spyOn } from 'bun:test';
 
-import { PageFlip, ReadingDirection } from '../src';
+import { CoverDensity, PageFlip, ReadingDirection } from '../src';
 import type { HTMLPage } from '../src/Page/HTMLPage';
 import { PageDensity } from '../src/Page/Page';
 import { Orientation } from '../src/Render/Render';
@@ -132,6 +132,30 @@ describe('reading direction', () => {
             explicit.book.destroy();
         },
     );
+
+    it('supports standalone soft covers without changing the cover spread layout', () => {
+        const root = document.createElement('div');
+        const pages = Array.from({ length: 6 }, () => document.createElement('div'));
+        root.append(...pages);
+        document.body.append(root);
+
+        const book = new PageFlip(root, {
+            width: 400,
+            height: 600,
+            usePortrait: false,
+            showCover: true,
+            coverDensity: CoverDensity.SOFT,
+        });
+        book.loadFromHTML(pages);
+
+        expect(book.getPageCollection().getPage(0).getDensity()).toBe(PageDensity.SOFT);
+        expect(book.getPageCollection().getPage(5).getDensity()).toBe(PageDensity.SOFT);
+        expect(book.getCurrentPageIndex()).toBe(0);
+        book.turnToNextPage();
+        expect(book.getCurrentPageIndex()).toBe(1);
+
+        book.destroy();
+    });
 
     it('places an RTL portrait page on the left half', () => {
         const { book, pages } = createBook(ReadingDirection.RTL, 3, true);

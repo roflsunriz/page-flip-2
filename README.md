@@ -59,6 +59,8 @@ const pageFlip = new PageFlip(root, {
 pageFlip.loadFromHTML(document.querySelectorAll<HTMLElement>('[data-page-flip-2-page]'));
 ```
 
+`showCover: true` で表紙を単独表示しつつ雑誌のように柔らかくめくる場合は、`coverDensity: 'soft'` を指定します。既定値は従来互換の `'hard'` です。
+
 `pageFlip.destroy()` は生成したDOM、イベント、描画ループを破棄し、渡されたroot要素とHTMLページを初期状態へ戻します。同じrootへ新しいインスタンスを作り直せます。
 
 イベントのdataは型引数で指定できます。`on()` は同じインスタンスを返すため、登録を連結できます。

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import {
+    CoverDensity,
     FlipCorner,
     FlipDirection,
     FlippingState,
@@ -16,6 +17,7 @@ import type { WidgetEvent } from '../src';
 describe('public API', () => {
     it('exports the settings and state values used by consumers', () => {
         expect(String(ReadingDirection.RTL)).toBe('rtl');
+        expect(String(CoverDensity.SOFT)).toBe('soft');
         expect(String(SizeType.STRETCH)).toBe('stretch');
         expect(String(FlipCorner.BOTTOM)).toBe('bottom');
         expect(Number(FlipDirection.FORWARD)).toBe(0);
