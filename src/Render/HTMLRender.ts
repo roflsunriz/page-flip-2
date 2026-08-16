@@ -265,7 +265,11 @@ export class HTMLRender extends Render {
      * Draw left static page
      */
     private drawLeftPage(): void {
-        if (this.orientation === Orientation.PORTRAIT || this.leftPage === null) return;
+        if (
+            (this.orientation === Orientation.PORTRAIT && !this.app.isRtl()) ||
+            this.leftPage === null
+        )
+            return;
 
         if (
             this.direction === FlipDirection.BACK &&
@@ -314,7 +318,10 @@ export class HTMLRender extends Render {
         const tempDensity =
             this.flippingPage != null ? this.flippingPage.getDrawingDensity() : null;
 
-        if (!(this.orientation === Orientation.PORTRAIT && this.direction === FlipDirection.BACK)) {
+        if (!(
+            this.orientation === Orientation.PORTRAIT &&
+            !this.app.isNextPageDirection(this.direction)
+        )) {
             (this.bottomPage as HTMLPage).getElement().style.zIndex = (
                 this.getSettings().startZIndex + 3
             ).toString(10);

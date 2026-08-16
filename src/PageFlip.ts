@@ -2,7 +2,7 @@ import { PageCollection } from './Collection/PageCollection';
 import { ImagePageCollection } from './Collection/ImagePageCollection';
 import { HTMLPageCollection } from './Collection/HTMLPageCollection';
 import { PageRect, Point } from './BasicTypes';
-import { Flip, FlipCorner, FlippingState } from './Flip/Flip';
+import { Flip, FlipCorner, FlipDirection, FlippingState } from './Flip/Flip';
 import { Orientation, Render } from './Render/Render';
 import { CanvasRender } from './Render/CanvasRender';
 import { HTMLUI } from './UI/HTMLUI';
@@ -11,7 +11,7 @@ import { Helper } from './Helper';
 import { Page } from './Page/Page';
 import { EventObject } from './Event/EventObject';
 import { HTMLRender } from './Render/HTMLRender';
-import { FlipSetting, Settings } from './Settings';
+import { FlipSetting, ReadingDirection, Settings } from './Settings';
 import { UI } from './UI/UI';
 
 import './styles/page-flip-2.css';
@@ -101,13 +101,14 @@ export class PageFlip extends EventObject {
      * @param {(NodeListOf<HTMLElement>|HTMLElement[])} items - List of pages as HTML Element
      */
     public loadFromHTML(items: NodeListOf<HTMLElement> | HTMLElement[]): void {
-        this.ui = new HTMLUI(this.block, this, this.setting, items);
+        const pageItems = Array.from(items);
+        this.ui = new HTMLUI(this.block, this, this.setting, pageItems);
 
         this.render = new HTMLRender(this, this.setting, this.ui.getDistElement());
 
         this.flipController = new Flip(this.render, this);
 
-        this.pages = new HTMLPageCollection(this, this.render, this.ui.getDistElement(), items);
+        this.pages = new HTMLPageCollection(this, this.render, this.ui.getDistElement(), pageItems);
         this.pages.load();
 
         this.render.start();
@@ -130,8 +131,7 @@ export class PageFlip extends EventObject {
      * @param {string[]} imagesHref - List of paths to images
      */
     public updateFromImages(imagesHref: string[]): void {
-        const current = this.pages.getCurrentPageIndex();
-
+        const current = this.getCurrentPageIndex();
         this.pages.destroy();
         this.pages = new ImagePageCollection(this, this.render, imagesHref);
         this.pages.load();
@@ -149,12 +149,13 @@ export class PageFlip extends EventObject {
      * @param {(NodeListOf<HTMLElement>|HTMLElement[])} items - List of pages as HTML Element
      */
     public updateFromHtml(items: NodeListOf<HTMLElement> | HTMLElement[]): void {
-        const current = this.pages.getCurrentPageIndex();
+        const current = this.getCurrentPageIndex();
+        const pageItems = Array.from(items);
 
         this.pages.destroy();
-        this.pages = new HTMLPageCollection(this, this.render, this.ui.getDistElement(), items);
+        this.pages = new HTMLPageCollection(this, this.render, this.ui.getDistElement(), pageItems);
         this.pages.load();
-        (this.ui as HTMLUI).updateItems(items);
+        (this.ui as HTMLUI).updateItems(pageItems);
         this.render.reload();
 
         this.pages.show(current);
@@ -201,7 +202,8 @@ export class PageFlip extends EventObject {
      * @param {FlipCorner} corner - Active page corner when turning
      */
     public flipNext(corner: FlipCorner = FlipCorner.TOP): void {
-        this.flipController.flipNext(corner);
+        if (this.isRtl()) this.flipController.flipPrev(corner);
+        else this.flipController.flipNext(corner);
     }
 
     /**
@@ -210,7 +212,8 @@ export class PageFlip extends EventObject {
      * @param {FlipCorner} corner - Active page corner when turning
      */
     public flipPrev(corner: FlipCorner = FlipCorner.TOP): void {
-        this.flipController.flipPrev(corner);
+        if (this.isRtl()) this.flipController.flipNext(corner);
+        else this.flipController.flipPrev(corner);
     }
 
     /**
@@ -248,7 +251,6 @@ export class PageFlip extends EventObject {
      */
     public updateOrientation(newOrientation: Orientation): void {
         this.ui.setOrientationStyle(newOrientation);
-        this.update();
         this.trigger('changeOrientation', this, newOrientation);
     }
 
@@ -278,6 +280,16 @@ export class PageFlip extends EventObject {
      */
     public getPage(pageIndex: number): Page {
         return this.pages.getPage(pageIndex);
+    }
+
+    public isRtl(): boolean {
+        return this.setting.readingDirection === ReadingDirection.RTL;
+    }
+
+    public isNextPageDirection(direction: FlipDirection): boolean {
+        return this.isRtl()
+            ? direction === FlipDirection.BACK
+            : direction === FlipDirection.FORWARD;
     }
 
     /**

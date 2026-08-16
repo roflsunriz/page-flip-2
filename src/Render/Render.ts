@@ -236,13 +236,13 @@ export abstract class Render {
 
             left =
                 orientation === Orientation.PORTRAIT
-                    ? middlePoint.x - pageWidth / 2 - pageWidth
+                    ? middlePoint.x - pageWidth / 2 - (this.app.isRtl() ? 0 : pageWidth)
                     : middlePoint.x - pageWidth;
         } else {
             if (blockWidth < pageWidth * 2) {
                 if (this.app.getSettings().usePortrait) {
                     orientation = Orientation.PORTRAIT;
-                    left = middlePoint.x - pageWidth / 2 - pageWidth;
+                    left = middlePoint.x - pageWidth / 2 - (this.app.isRtl() ? 0 : pageWidth);
                 }
             }
         }
@@ -397,13 +397,17 @@ export abstract class Render {
      * @param page
      */
     public setFlippingPage(page: Page): void {
-        if (page !== null)
-            page.setOrientation(
-                this.direction === FlipDirection.FORWARD &&
-                    this.orientation !== Orientation.PORTRAIT
-                    ? PageOrientation.LEFT
-                    : PageOrientation.RIGHT,
-            );
+        if (page !== null) {
+            const orientation =
+                this.orientation === Orientation.PORTRAIT
+                    ? this.app.isRtl()
+                        ? PageOrientation.LEFT
+                        : PageOrientation.RIGHT
+                    : this.direction === FlipDirection.FORWARD
+                      ? PageOrientation.LEFT
+                      : PageOrientation.RIGHT;
+            page.setOrientation(orientation);
+        }
 
         this.flippingPage = page;
     }

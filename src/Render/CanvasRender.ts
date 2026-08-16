@@ -29,7 +29,7 @@ export class CanvasRender extends Render {
     protected drawFrame(): void {
         this.clear();
 
-        if (this.orientation !== Orientation.PORTRAIT)
+        if (this.orientation !== Orientation.PORTRAIT || this.app.isRtl())
             if (this.leftPage != null) this.leftPage.simpleDraw(PageOrientation.LEFT);
 
         if (this.rightPage != null) this.rightPage.simpleDraw(PageOrientation.RIGHT);
@@ -49,7 +49,12 @@ export class CanvasRender extends Render {
 
         if (this.orientation === Orientation.PORTRAIT) {
             this.ctx.beginPath();
-            this.ctx.rect(rect.left + rect.pageWidth, rect.top, rect.width, rect.height);
+            this.ctx.rect(
+                this.app.isRtl() ? rect.left : rect.left + rect.pageWidth,
+                rect.top,
+                rect.pageWidth,
+                rect.height,
+            );
             this.ctx.clip();
         }
     }

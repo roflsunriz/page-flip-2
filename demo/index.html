@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>page-flip-2 direction demo</title>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 24px;
+                color: #172033;
+                background: #edf1f8;
+                font-family: system-ui, sans-serif;
+            }
+
+            main {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 24px;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+
+            section {
+                min-width: 0;
+                padding: 16px;
+                overflow: hidden;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 12px 30px rgb(43 55 85 / 12%);
+            }
+
+            h1 {
+                margin: 0 0 12px;
+                font-size: 18px;
+            }
+
+            .book {
+                width: 100%;
+                height: min(68vh, 560px);
+            }
+
+            [data-page] {
+                display: grid;
+                place-items: center;
+                color: white;
+                font:
+                    700 48px/1 system-ui,
+                    sans-serif;
+                background: linear-gradient(145deg, #5167d8, #26347d);
+                border: 2px solid rgb(255 255 255 / 75%);
+            }
+
+            [data-page]:nth-child(even) {
+                background: linear-gradient(145deg, #e07162, #923b5b);
+            }
+
+            nav {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                margin-top: 12px;
+            }
+
+            button {
+                min-width: 88px;
+                min-height: 40px;
+            }
+
+            @media (max-width: 700px) {
+                body {
+                    padding: 12px;
+                }
+
+                main {
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                }
+
+                .book {
+                    height: 440px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <section>
+                <h1>LTR</h1>
+                <div class="book" data-book="ltr">
+                    <div data-page>0</div>
+                    <div data-page>1</div>
+                    <div data-page>2</div>
+                    <div data-page>3</div>
+                    <div data-page>4</div>
+                </div>
+                <nav>
+                    <button data-action="prev" data-target="ltr">前</button
+                    ><button data-action="next" data-target="ltr">次</button>
+                </nav>
+            </section>
+            <section>
+                <h1>RTL</h1>
+                <div class="book" data-book="rtl">
+                    <div data-page>0</div>
+                    <div data-page>1</div>
+                    <div data-page>2</div>
+                    <div data-page>3</div>
+                    <div data-page>4</div>
+                </div>
+                <nav>
+                    <button data-action="prev" data-target="rtl">前</button
+                    ><button data-action="next" data-target="rtl">次</button>
+                </nav>
+            </section>
+        </main>
+
+        <script type="module">
+            import { PageFlip, ReadingDirection, SizeType } from '../dist/page-flip-2.js';
+
+            const createBook = (key, readingDirection) => {
+                const root = document.querySelector(`[data-book="${key}"]`);
+                const pages = root.querySelectorAll('[data-page]');
+                const book = new PageFlip(root, {
+                    size: SizeType.STRETCH,
+                    readingDirection,
+                    width: 280,
+                    height: 420,
+                    minWidth: 240,
+                    maxWidth: 560,
+                    minHeight: 360,
+                    maxHeight: 840,
+                    usePortrait: true,
+                    flippingTime: 120,
+                });
+                book.loadFromHTML(pages);
+                return book;
+            };
+
+            window.demoBooks = {
+                ltr: createBook('ltr', ReadingDirection.LTR),
+                rtl: createBook('rtl', ReadingDirection.RTL),
+            };
+
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-action]');
+                if (button === null) return;
+
+                const book = window.demoBooks[button.dataset.target];
+                if (button.dataset.action === 'next') book.flipNext();
+                else book.flipPrev();
+            });
+        </script>
+    </body>
+</html>

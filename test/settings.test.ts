@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import { Settings, SizeType } from '../src/Settings';
+import { ReadingDirection, Settings, SizeType } from '../src/Settings';
 
 describe('Settings', () => {
     it('derives fixed bounds from the requested page size', () => {
@@ -42,4 +42,33 @@ describe('Settings', () => {
         expect(settings.maxHeight).toBe(2000);
     });
 
+    it('does not leak options from one call into the next', () => {
+        const settingsFactory = new Settings();
+
+        const rtl = settingsFactory.getSettings({
+            width: 400,
+            height: 600,
+            readingDirection: ReadingDirection.RTL,
+            drawShadow: false,
+        });
+        const defaults = settingsFactory.getSettings({
+            width: 400,
+            height: 600,
+        });
+
+        expect(rtl.readingDirection).toBe(ReadingDirection.RTL);
+        expect(rtl.drawShadow).toBe(false);
+        expect(defaults.readingDirection).toBe(ReadingDirection.LTR);
+        expect(defaults.drawShadow).toBe(true);
+    });
+
+    it('rejects unsupported reading directions', () => {
+        expect(() =>
+            new Settings().getSettings({
+                width: 400,
+                height: 600,
+                readingDirection: 'vertical' as ReadingDirection,
+            }),
+        ).toThrow('Invalid reading direction');
+    });
 });

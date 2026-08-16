@@ -8,6 +8,13 @@ export const enum SizeType {
     STRETCH = 'stretch',
 }
 
+export const ReadingDirection = {
+    LTR: 'ltr',
+    RTL: 'rtl',
+} as const;
+
+export type ReadingDirection = (typeof ReadingDirection)[keyof typeof ReadingDirection];
+
 /**
  * Configuration object
  */
@@ -16,6 +23,8 @@ export interface FlipSetting {
     startPage: number;
     /** Whether the book will be stretched under the parent element or not */
     size: SizeType;
+    /** Logical order and physical turning direction of the book */
+    readingDirection: ReadingDirection;
 
     width: number;
     height: number;
@@ -60,9 +69,10 @@ export interface FlipSetting {
 }
 
 export class Settings {
-    private _default: FlipSetting = {
+    private readonly defaultSetting: FlipSetting = {
         startPage: 0,
         size: SizeType.FIXED,
+        readingDirection: ReadingDirection.LTR,
         width: 0,
         height: 0,
         minWidth: 0,
@@ -90,12 +100,21 @@ export class Settings {
      * @param userSetting
      * @returns {FlipSetting} Сonfiguration object
      */
-    public getSettings(userSetting: Record<string, number | string | boolean>): FlipSetting {
-        const result = this._default;
-        Object.assign(result, userSetting);
+    public getSettings(userSetting: Partial<FlipSetting>): FlipSetting {
+        const result: FlipSetting = {
+            ...this.defaultSetting,
+            ...userSetting,
+        };
 
         if (result.size !== SizeType.STRETCH && result.size !== SizeType.FIXED)
             throw new Error('Invalid size type. Available only "fixed" and "stretch" value');
+
+        if (
+            result.readingDirection !== ReadingDirection.LTR &&
+            result.readingDirection !== ReadingDirection.RTL
+        ) {
+            throw new Error('Invalid reading direction. Available only "ltr" and "rtl" values');
+        }
 
         if (result.width <= 0 || result.height <= 0) throw new Error('Invalid width or height');
 

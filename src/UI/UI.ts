@@ -1,6 +1,6 @@
 import { PageFlip } from '../PageFlip';
 import { Point } from '../BasicTypes';
-import { FlipSetting, SizeType } from '../Settings';
+import { FlipSetting, ReadingDirection, SizeType } from '../Settings';
 import { FlipCorner, FlippingState } from '../Flip/Flip';
 import { Orientation } from '../Render/Render';
 
@@ -24,7 +24,7 @@ export abstract class UI {
     private readonly swipeDistance: number;
 
     private onResize = (): void => {
-        this.update();
+        this.app.update();
     };
 
     /**
@@ -38,6 +38,7 @@ export abstract class UI {
         this.parentElement = inBlock;
 
         inBlock.classList.add('page-flip-2__parent');
+        inBlock.dataset['pageFlip2ReadingDirection'] = setting.readingDirection;
         // Add first wrapper
         inBlock.insertAdjacentHTML('afterbegin', '<div class="page-flip-2__wrapper"></div>');
 
@@ -261,18 +262,19 @@ export abstract class UI {
                     distY < this.swipeDistance * 2 &&
                     Date.now() - this.touchPoint.time < this.swipeTimeout
                 ) {
-                    if (dx > 0) {
-                        this.app.flipPrev(
-                            this.touchPoint.point.y < this.app.getRender().getRect().height / 2
-                                ? FlipCorner.TOP
-                                : FlipCorner.BOTTOM,
-                        );
+                    const corner =
+                        this.touchPoint.point.y < this.app.getRender().getRect().height / 2
+                            ? FlipCorner.TOP
+                            : FlipCorner.BOTTOM;
+                    const isNextPage =
+                        this.app.getSettings().readingDirection === ReadingDirection.RTL
+                            ? dx > 0
+                            : dx < 0;
+
+                    if (isNextPage) {
+                        this.app.flipNext(corner);
                     } else {
-                        this.app.flipNext(
-                            this.touchPoint.point.y < this.app.getRender().getRect().height / 2
-                                ? FlipCorner.TOP
-                                : FlipCorner.BOTTOM,
-                        );
+                        this.app.flipPrev(corner);
                     }
                     isSwipe = true;
                 }

@@ -24,16 +24,18 @@ bun install
 bun run lint
 bun run format:check
 bun run type-check
-bun run test
+bun test
 bun run build
 ```
 
 ビルド成果物は `dist/page-flip-2.js` に生成されます。CSSはbundle内から一度だけ注入されるため、別のCSSファイルを読み込む必要はありません。
 
+`bun run demo` でLTRとRTLを並べた動作確認用ページを起動できます。`readingDirection` の既定値は `ReadingDirection.LTR` です。
+
 ## 使用例
 
 ```ts
-import { PageFlip, SizeType } from 'page-flip-2';
+import { PageFlip, ReadingDirection, SizeType } from 'page-flip-2';
 
 const root = document.querySelector<HTMLElement>('#book');
 
@@ -43,6 +45,7 @@ if (root === null) {
 
 const pageFlip = new PageFlip(root, {
     size: SizeType.STRETCH,
+    readingDirection: ReadingDirection.RTL,
     width: 400,
     height: 600,
     minWidth: 280,
