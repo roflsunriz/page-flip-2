@@ -11,6 +11,8 @@ const server = Bun.serve({
     port: 4173,
     fetch(request) {
         const path = new URL(request.url).pathname;
+        if (path === '/favicon.ico') return new Response(null, { status: 204 });
+
         const file = routes.get(path);
 
         return file === undefined ? new Response('Not found', { status: 404 }) : new Response(file);

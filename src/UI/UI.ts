@@ -31,9 +31,15 @@ export abstract class UI {
     private readonly initiallyHadParentClass: boolean;
     private readonly initialInlineStyles = new Map<string, InlineStyleState>();
     private touchTimeoutId: number = null;
+    private resizeFrameId: number = null;
+    private resizeObserver: ResizeObserver = null;
 
     private onResize = (): void => {
-        this.app.update();
+        if (this.resizeFrameId !== null) cancelAnimationFrame(this.resizeFrameId);
+        this.resizeFrameId = requestAnimationFrame(() => {
+            this.resizeFrameId = null;
+            this.app.update();
+        });
     };
 
     /**
@@ -91,6 +97,7 @@ export abstract class UI {
     public destroy(): void {
         this.removeHandlers();
         if (this.touchTimeoutId !== null) window.clearTimeout(this.touchTimeoutId);
+        if (this.resizeFrameId !== null) cancelAnimationFrame(this.resizeFrameId);
 
         this.distElement.remove();
         this.wrapper.remove();
@@ -164,6 +171,8 @@ export abstract class UI {
 
     protected removeHandlers(): void {
         window.removeEventListener('resize', this.onResize);
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = null;
 
         this.distElement.removeEventListener('mousedown', this.onMouseDown);
         this.distElement.removeEventListener('touchstart', this.onTouchStart);
@@ -174,7 +183,12 @@ export abstract class UI {
     }
 
     protected setHandlers(): void {
-        window.addEventListener('resize', this.onResize, false);
+        if (typeof ResizeObserver === 'function') {
+            this.resizeObserver = new ResizeObserver(this.onResize);
+            this.resizeObserver.observe(this.parentElement);
+        } else {
+            window.addEventListener('resize', this.onResize, false);
+        }
         if (!this.app.getSettings().useMouseEvents) return;
 
         this.distElement.addEventListener('mousedown', this.onMouseDown);

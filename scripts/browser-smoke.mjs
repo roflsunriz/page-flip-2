@@ -105,6 +105,12 @@ await command('Emulation.setDeviceMetricsOverride', {
 await Bun.sleep(100);
 const desktop = await inspect();
 
+await evaluate(`document.querySelector('[data-book="ltr"]').style.width = '300px'`);
+await Bun.sleep(100);
+const containerResized = await inspect();
+await evaluate(`document.querySelector('[data-book="ltr"]').style.width = '100%'`);
+await Bun.sleep(100);
+
 await evaluate(`(() => {
     document.querySelector('[data-action="next"][data-target="ltr"]').click();
     document.querySelector('[data-action="next"][data-target="rtl"]').click();
@@ -144,6 +150,10 @@ const assertions = [
     [desktop.books.rtl.currentPage === 0, 'RTL must start at logical page 0'],
     [desktop.books.ltr.pageClasses[0].includes('--left'), 'LTR page 0 must be on the left'],
     [desktop.books.rtl.pageClasses[0].includes('--right'), 'RTL page 0 must be on the right'],
+    [
+        containerResized.books.ltr.orientation === 'portrait',
+        'container-only resize must update orientation',
+    ],
     [afterTurn.books.ltr.currentPage === 2, 'LTR next must advance to logical page 2'],
     [afterTurn.books.rtl.currentPage === 2, 'RTL next must advance to logical page 2'],
     [
@@ -179,7 +189,15 @@ await fetch(`${cdpBaseUrl}/json/close/${target.id}`);
 if (failures.length > 0) {
     console.error(
         JSON.stringify(
-            { desktop, afterTurn, mobile, destroyed, reinitialized, browserErrors },
+            {
+                desktop,
+                containerResized,
+                afterTurn,
+                mobile,
+                destroyed,
+                reinitialized,
+                browserErrors,
+            },
             null,
             2,
         ),
