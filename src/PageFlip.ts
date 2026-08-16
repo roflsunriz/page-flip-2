@@ -14,7 +14,25 @@ import { HTMLRender } from './Render/HTMLRender';
 import { FlipSetting, ReadingDirection, Settings } from './Settings';
 import { UI } from './UI/UI';
 
-import './styles/page-flip-2.css';
+import pageFlipStyles from './styles/page-flip-2.css' with { type: 'text' };
+
+const STYLE_ATTRIBUTE = 'data-page-flip-2-styles';
+const STYLE_SELECTOR = `style[${STYLE_ATTRIBUTE}]`;
+
+const ensureStyles = (element: HTMLElement): void => {
+    const nodeRoot = element.getRootNode();
+    const styleRoot =
+        typeof ShadowRoot !== 'undefined' && nodeRoot instanceof ShadowRoot
+            ? nodeRoot
+            : element.ownerDocument.head;
+
+    if (styleRoot.querySelector(STYLE_SELECTOR) !== null) return;
+
+    const style = element.ownerDocument.createElement('style');
+    style.setAttribute(STYLE_ATTRIBUTE, '');
+    style.textContent = pageFlipStyles;
+    styleRoot.append(style);
+};
 
 /**
  * Class representing a main PageFlip object
@@ -47,6 +65,7 @@ export class PageFlip extends EventObject {
     constructor(inBlock: HTMLElement, setting: Partial<FlipSetting>) {
         super();
 
+        ensureStyles(inBlock);
         this.setting = new Settings().getSettings(setting);
         this.block = inBlock;
     }

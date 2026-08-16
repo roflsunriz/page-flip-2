@@ -8,29 +8,6 @@ if (dirname(distDirectory) !== projectRoot) {
     throw new Error(`Refusing to clean unexpected output directory: ${distDirectory}`);
 }
 
-const cssInjectionPlugin = {
-    name: 'page-flip-2-css-injection',
-    setup(builder) {
-        builder.onLoad({ filter: /\.css$/ }, async ({ path }) => {
-            const css = await Bun.file(path).text();
-            const contents = `
-                const css = ${JSON.stringify(css)};
-                if (typeof document !== 'undefined' && document.head !== null) {
-                    const selector = 'style[data-page-flip-2-styles]';
-                    if (document.head.querySelector(selector) === null) {
-                        const style = document.createElement('style');
-                        style.setAttribute('data-page-flip-2-styles', '');
-                        style.textContent = css;
-                        document.head.append(style);
-                    }
-                }
-            `;
-
-            return { contents, loader: 'js' };
-        });
-    },
-};
-
 const runTypeScriptDeclarations = async () => {
     const subprocess = Bun.spawn([process.execPath, 'x', 'tsc', '--emitDeclarationOnly'], {
         cwd: projectRoot,
@@ -53,7 +30,6 @@ const buildBundle = async () => {
         minify: true,
         sourcemap: 'linked',
         naming: 'page-flip-2.[ext]',
-        plugins: [cssInjectionPlugin],
     });
 
     if (!result.success) {
