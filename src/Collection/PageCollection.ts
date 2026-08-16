@@ -66,10 +66,7 @@ export abstract class PageCollection {
 
         for (let i = start; i < this.pages.length; i += 2) {
             if (i < this.pages.length - 1) this.landscapeSpread.push([i, i + 1]);
-            else {
-                this.landscapeSpread.push([i]);
-                this.pages[i].setDensity(PageDensity.HARD);
-            }
+            else this.landscapeSpread.push([i]);
         }
     }
 

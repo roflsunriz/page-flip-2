@@ -1,0 +1,12 @@
+diff --git a/index.js b/index.js
+index 9e53f0580b47260d8d272fa832d50f61589656e3..bd30270c24a5e8303c2eb57d66ceb89173c106ad 100644
+--- a/index.js
++++ b/index.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ 
+-const punycode = require("punycode/");
++const punycode = require("punycode");
+ const regexes = require("./lib/regexes.js");
+ const mappingTable = require("./lib/mappingTable.json");
+ const { STATUS_MAPPING } = require("./lib/statusMapping.js");

@@ -80,9 +80,14 @@ const inspect = () =>
             const pages = [...root.querySelectorAll('[data-page]')];
             return [key, {
                 currentPage: book.getCurrentPageIndex(),
+                state: book.getState(),
                 orientation: book.getOrientation(),
                 root: root.getBoundingClientRect().toJSON(),
                 pageClasses: pages.map((page) => [...page.classList]),
+                pageDensities: book.getPageCollection().getPages().map((page) => ({
+                    created: page.getDensity(),
+                    drawing: page.getDrawingDensity(),
+                })),
             }];
         })),
         canvas: {
@@ -123,6 +128,31 @@ await evaluate(`(() => {
 })()`);
 await Bun.sleep(400);
 const afterTurn = await inspect();
+
+const hoverCorner = async (key, edge) => {
+    const point = await evaluate(`(() => {
+        const rect = document
+            .querySelector('[data-book="${key}"] .page-flip-2__block')
+            .getBoundingClientRect();
+        const pageRect = window.demoBooks["${key}"].getRender().getRect();
+        return {
+            x: rect.left + ${edge === 'right' ? 'pageRect.left + pageRect.width - 1' : 'pageRect.left + 1'},
+            y: rect.top + pageRect.top + 1,
+        };
+    })()`);
+    await command('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: point.x,
+        y: point.y,
+    });
+    await evaluate(
+        `new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))`,
+    );
+    return inspect();
+};
+
+const ltrFinalHover = await hoverCorner('ltr', 'right');
+const rtlFinalHover = await hoverCorner('rtl', 'left');
 
 await command('Emulation.setDeviceMetricsOverride', {
     width: 390,
@@ -176,6 +206,16 @@ const assertions = [
     [afterTurn.books.rtl.currentPage === 2, 'RTL next must advance to logical page 2'],
     [afterTurn.canvas.currentPage === 2, 'Canvas RTL next must advance to logical page 2'],
     [
+        ltrFinalHover.books.ltr.pageDensities[4].created === 'soft',
+        'LTR final-page hover must use the same soft-page animation as regular pages',
+    ],
+    [ltrFinalHover.books.ltr.state === 'fold_corner', 'LTR final-page hover must start folding'],
+    [
+        rtlFinalHover.books.rtl.pageDensities[4].created === 'soft',
+        'RTL final-page hover must use the same soft-page animation as regular pages',
+    ],
+    [rtlFinalHover.books.rtl.state === 'fold_corner', 'RTL final-page hover must start folding'],
+    [
         afterTurn.books.rtl.pageClasses.slice(2, 4).every((classes) => classes.includes('--soft')),
         'RTL animation must restore soft-page density',
     ],
@@ -218,6 +258,8 @@ if (failures.length > 0) {
                 desktop,
                 containerResized,
                 afterTurn,
+                ltrFinalHover,
+                rtlFinalHover,
                 mobile,
                 destroyed,
                 reinitialized,
@@ -235,6 +277,16 @@ console.log(
         desktop: {
             ltr: afterTurn.books.ltr.currentPage,
             rtl: afterTurn.books.rtl.currentPage,
+        },
+        finalHover: {
+            ltr: {
+                state: ltrFinalHover.books.ltr.state,
+                finalDensity: ltrFinalHover.books.ltr.pageDensities[4],
+            },
+            rtl: {
+                state: rtlFinalHover.books.rtl.state,
+                finalDensity: rtlFinalHover.books.rtl.pageDensities[4],
+            },
         },
         mobile: {
             ltr: mobile.books.ltr.orientation,

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest, mock, spyOn } from '
 
 import { PageFlip, ReadingDirection } from '../src';
 import type { HTMLPage } from '../src/Page/HTMLPage';
+import { PageDensity } from '../src/Page/Page';
 import { Orientation } from '../src/Render/Render';
 
 type BookFixture = {
@@ -111,6 +112,26 @@ describe('reading direction', () => {
 
         book.destroy();
     });
+
+    it.each([ReadingDirection.LTR, ReadingDirection.RTL])(
+        'keeps an unpaired final %s page soft unless explicitly configured as hard',
+        (readingDirection) => {
+            const automatic = createBook(readingDirection, 5);
+            const automaticFinalPage = automatic.book.getPageCollection().getPage(4);
+
+            expect(automaticFinalPage.getDensity()).toBe(PageDensity.SOFT);
+            automatic.book.destroy();
+
+            const explicit = createBook(readingDirection, 5);
+            explicit.pages[4].dataset['density'] = PageDensity.HARD;
+            explicit.book.updateFromHtml(explicit.pages);
+
+            expect(explicit.book.getPageCollection().getPage(4).getDensity()).toBe(
+                PageDensity.HARD,
+            );
+            explicit.book.destroy();
+        },
+    );
 
     it('places an RTL portrait page on the left half', () => {
         const { book, pages } = createBook(ReadingDirection.RTL, 3, true);
