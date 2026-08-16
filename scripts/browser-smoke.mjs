@@ -32,7 +32,10 @@ socket.addEventListener('message', ({ data }) => {
     }
 
     if (message.method === 'Runtime.exceptionThrown') {
-        browserErrors.push(message.params.exceptionDetails.text);
+        browserErrors.push(
+            message.params.exceptionDetails.exception?.description ??
+                message.params.exceptionDetails.text,
+        );
     }
     if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error') {
         browserErrors.push(message.params.entry.text);

@@ -64,6 +64,31 @@ describe('lifecycle', () => {
         expect(initListener).not.toHaveBeenCalled();
     });
 
+    it('does not keep scheduling frames while an initialized book is idle', () => {
+        const queuedFrames: FrameRequestCallback[] = [];
+        globalThis.requestAnimationFrame = mock((callback: FrameRequestCallback) => {
+            queuedFrames.push(callback);
+            return queuedFrames.length;
+        });
+
+        const root = document.createElement('div');
+        const pages = [document.createElement('div'), document.createElement('div')];
+        root.append(...pages);
+        document.body.append(root);
+
+        const book = new PageFlip(root, { width: 400, height: 600 });
+        book.loadFromHTML(pages);
+
+        expect(queuedFrames).toHaveLength(1);
+        queuedFrames.shift()?.(performance.now());
+        expect(queuedFrames).toHaveLength(0);
+
+        book.update();
+        expect(queuedFrames).toHaveLength(1);
+
+        book.destroy();
+    });
+
     it('cleans replaced pages and clamps the current spread after an update', () => {
         const root = document.createElement('div');
         const originalPages = Array.from({ length: 4 }, (_, index) => {

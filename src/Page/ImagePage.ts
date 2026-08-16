@@ -117,6 +117,8 @@ export class ImagePage extends Page {
         if (this.loadingAngle >= 2 * Math.PI) {
             this.loadingAngle = 0;
         }
+
+        this.render.requestRender();
     }
 
     public load(): void {
@@ -125,15 +127,18 @@ export class ImagePage extends Page {
         this.loadState = ImageLoadState.LOADING;
         this.image.onload = (): void => {
             this.loadState = ImageLoadState.LOADED;
+            this.render.requestRender();
         };
         this.image.onerror = (): void => {
             this.loadState = ImageLoadState.ERROR;
+            this.render.requestRender();
         };
         this.image.src = this.href;
 
         if (this.loadState === ImageLoadState.LOADING && this.image.complete) {
             this.loadState =
                 this.image.naturalWidth > 0 ? ImageLoadState.LOADED : ImageLoadState.ERROR;
+            this.render.requestRender();
         }
     }
 

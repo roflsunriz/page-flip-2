@@ -34,9 +34,11 @@ describe('ImagePage', () => {
 
         globalThis.Image = CachedImage as unknown as typeof Image;
         const drawImage = mock(() => undefined);
+        const requestRender = mock(() => undefined);
         const render = {
             getContext: () => ({ drawImage }),
             getRect: () => ({ left: 10, top: 20, width: 200, height: 200, pageWidth: 100 }),
+            requestRender,
         } as unknown as CanvasRender;
         const page = new ImagePage(render, '/cached-page.jpg', PageDensity.SOFT);
         const imageInstance = CachedImage.latest;
@@ -45,6 +47,7 @@ describe('ImagePage', () => {
         page.simpleDraw(PageOrientation.RIGHT);
 
         expect(imageInstance.assignedWithLoadHandler).toBe(true);
+        expect(requestRender).toHaveBeenCalled();
         expect(drawImage).toHaveBeenCalledTimes(1);
         expect(drawImage).toHaveBeenCalledWith(imageInstance, 110, 20, 100, 200);
 

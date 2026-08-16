@@ -39,7 +39,7 @@ type AnimationProcess = {
     /** Сallback at the end of the animation */
     onAnimateEnd: AnimationSuccessAction;
     /** Animation start time (Global Timer) */
-    startedAt: number;
+    startedAt: number | null;
 };
 
 /**
@@ -116,8 +116,13 @@ export abstract class Render {
      *
      * @param timer
      */
-    private render(timer: number): void {
+    private renderFrame = (timer: number): void => {
+        this.animationFrameId = null;
+        if (!this.isRunning) return;
+
         if (this.animation !== null) {
+            if (this.animation.startedAt === null) this.animation.startedAt = timer;
+
             // Find current frame of animation
             const frameIndex = Math.round(
                 (timer - this.animation.startedAt) / this.animation.durationFrame,
@@ -126,14 +131,17 @@ export abstract class Render {
             if (frameIndex < this.animation.frames.length) {
                 this.animation.frames[frameIndex]();
             } else {
-                this.animation.onAnimateEnd();
+                const onAnimateEnd = this.animation.onAnimateEnd;
                 this.animation = null;
+                onAnimateEnd();
             }
         }
 
         this.timer = timer;
         this.drawFrame();
-    }
+
+        if (this.animation !== null) this.requestRender();
+    };
 
     /**
      * Running requestAnimationFrame, and rendering process
@@ -143,15 +151,14 @@ export abstract class Render {
 
         this.isRunning = true;
         this.update();
+        this.requestRender();
+    }
 
-        const loop = (timer: number): void => {
-            if (!this.isRunning) return;
+    /** Queue one render frame, coalescing repeated state changes. */
+    public requestRender(): void {
+        if (!this.isRunning || this.animationFrameId !== null) return;
 
-            this.render(timer);
-            this.animationFrameId = requestAnimationFrame(loop);
-        };
-
-        this.animationFrameId = requestAnimationFrame(loop);
+        this.animationFrameId = requestAnimationFrame(this.renderFrame);
     }
 
     public stop(): void {
@@ -182,8 +189,9 @@ export abstract class Render {
             duration,
             durationFrame: duration / frames.length,
             onAnimateEnd,
-            startedAt: this.timer,
+            startedAt: null,
         };
+        this.requestRender();
     }
 
     /**
@@ -191,14 +199,16 @@ export abstract class Render {
      */
     public finishAnimation(): void {
         if (this.animation !== null) {
-            this.animation.frames[this.animation.frames.length - 1]();
+            const animation = this.animation;
+            this.animation = null;
+            animation.frames[animation.frames.length - 1]();
 
-            if (this.animation.onAnimateEnd !== null) {
-                this.animation.onAnimateEnd();
+            if (animation.onAnimateEnd !== null) {
+                animation.onAnimateEnd();
             }
         }
 
-        this.animation = null;
+        this.requestRender();
     }
 
     /**
@@ -212,6 +222,8 @@ export abstract class Render {
             this.orientation = orientation;
             this.app.updateOrientation(orientation);
         }
+
+        this.requestRender();
     }
 
     /**
@@ -300,6 +312,7 @@ export abstract class Render {
             direction,
             progress: progress * 2,
         };
+        this.requestRender();
     }
 
     /**
@@ -307,6 +320,7 @@ export abstract class Render {
      */
     public clearShadow(): void {
         this.shadow = null;
+        this.requestRender();
     }
 
     /**
@@ -380,6 +394,7 @@ export abstract class Render {
         if (page !== null) page.setOrientation(PageOrientation.RIGHT);
 
         this.rightPage = page;
+        this.requestRender();
     }
 
     /**
@@ -390,6 +405,7 @@ export abstract class Render {
         if (page !== null) page.setOrientation(PageOrientation.LEFT);
 
         this.leftPage = page;
+        this.requestRender();
     }
 
     /**
@@ -405,6 +421,7 @@ export abstract class Render {
             );
 
         this.bottomPage = page;
+        this.requestRender();
     }
 
     /**
@@ -426,6 +443,7 @@ export abstract class Render {
         }
 
         this.flippingPage = page;
+        this.requestRender();
     }
 
     /**
