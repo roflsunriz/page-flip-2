@@ -162,6 +162,10 @@ export class HTMLPage extends Page {
         this.isLoad = true;
     }
 
+    public destroy(): void {
+        this.hideTemporaryCopy();
+    }
+
     public setOrientation(orientation: PageOrientation): void {
         super.setOrientation(orientation);
         this.element.classList.remove('--left', '--right');

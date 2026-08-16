@@ -42,6 +42,7 @@ export abstract class PageCollection {
      * Clear pages list
      */
     public destroy(): void {
+        for (const page of this.pages) page.destroy();
         this.pages = [];
     }
 

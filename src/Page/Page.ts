@@ -85,6 +85,9 @@ export abstract class Page {
      */
     public abstract load(): void;
 
+    /** Release resources owned by the page. */
+    public abstract destroy(): void;
+
     /**
      * Set a constant page density
      *

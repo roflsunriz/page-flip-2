@@ -3,12 +3,22 @@ import { Page, PageDensity, PageOrientation } from './Page';
 import { Render } from '../Render/Render';
 import { Point } from '../BasicTypes';
 
+const ImageLoadState = {
+    IDLE: 'idle',
+    LOADING: 'loading',
+    LOADED: 'loaded',
+    ERROR: 'error',
+} as const;
+
+type ImageLoadState = (typeof ImageLoadState)[keyof typeof ImageLoadState];
+
 /**
  * Class representing a book page as an image on Canvas
  */
 export class ImagePage extends Page {
     private readonly image: HTMLImageElement = null;
-    private isLoad = false;
+    private readonly href: string;
+    private loadState: ImageLoadState = ImageLoadState.IDLE;
 
     private loadingAngle = 0;
 
@@ -16,7 +26,7 @@ export class ImagePage extends Page {
         super(render, density);
 
         this.image = new Image();
-        this.image.src = href;
+        this.href = href;
     }
 
     public draw(): void {
@@ -41,10 +51,12 @@ export class ImagePage extends Page {
 
         ctx.clip();
 
-        if (!this.isLoad) {
+        if (this.loadState === ImageLoadState.LOADING) {
             this.drawLoader(ctx, { x: 0, y: 0 }, pageWidth, pageHeight);
-        } else {
+        } else if (this.loadState === ImageLoadState.LOADED) {
             ctx.drawImage(this.image, 0, 0, pageWidth, pageHeight);
+        } else {
+            this.drawError(ctx, { x: 0, y: 0 }, pageWidth, pageHeight);
         }
 
         ctx.restore();
@@ -61,10 +73,12 @@ export class ImagePage extends Page {
 
         const y = rect.top;
 
-        if (!this.isLoad) {
+        if (this.loadState === ImageLoadState.LOADING) {
             this.drawLoader(ctx, { x, y }, pageWidth, pageHeight);
-        } else {
+        } else if (this.loadState === ImageLoadState.LOADED) {
             ctx.drawImage(this.image, x, y, pageWidth, pageHeight);
+        } else {
+            this.drawError(ctx, { x, y }, pageWidth, pageHeight);
         }
     }
 
@@ -106,10 +120,28 @@ export class ImagePage extends Page {
     }
 
     public load(): void {
-        if (!this.isLoad)
-            this.image.onload = (): void => {
-                this.isLoad = true;
-            };
+        if (this.loadState !== ImageLoadState.IDLE) return;
+
+        this.loadState = ImageLoadState.LOADING;
+        this.image.onload = (): void => {
+            this.loadState = ImageLoadState.LOADED;
+        };
+        this.image.onerror = (): void => {
+            this.loadState = ImageLoadState.ERROR;
+        };
+        this.image.src = this.href;
+
+        if (this.loadState === ImageLoadState.LOADING && this.image.complete) {
+            this.loadState =
+                this.image.naturalWidth > 0 ? ImageLoadState.LOADED : ImageLoadState.ERROR;
+        }
+    }
+
+    public destroy(): void {
+        this.image.onload = null;
+        this.image.onerror = null;
+        this.image.removeAttribute('src');
+        this.loadState = ImageLoadState.IDLE;
     }
 
     public newTemporaryCopy(): Page {
@@ -122,5 +154,30 @@ export class ImagePage extends Page {
 
     public hideTemporaryCopy(): void {
         return;
+    }
+
+    private drawError(
+        ctx: CanvasRenderingContext2D,
+        shiftPos: Point,
+        pageWidth: number,
+        pageHeight: number,
+    ): void {
+        ctx.save();
+        ctx.strokeStyle = 'rgb(180, 80, 80)';
+        ctx.fillStyle = 'rgb(255, 245, 245)';
+        ctx.lineWidth = 2;
+        ctx.fillRect(shiftPos.x, shiftPos.y, pageWidth, pageHeight);
+        ctx.strokeRect(shiftPos.x + 1, shiftPos.y + 1, pageWidth - 2, pageHeight - 2);
+
+        const radius = Math.min(pageWidth, pageHeight) / 12;
+        const centerX = shiftPos.x + pageWidth / 2;
+        const centerY = shiftPos.y + pageHeight / 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX - radius, centerY - radius);
+        ctx.lineTo(centerX + radius, centerY + radius);
+        ctx.moveTo(centerX + radius, centerY - radius);
+        ctx.lineTo(centerX - radius, centerY + radius);
+        ctx.stroke();
+        ctx.restore();
     }
 }
