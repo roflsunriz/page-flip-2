@@ -1,12 +1,14 @@
 /**
  * Book size calculation type
  */
-export const enum SizeType {
+export const SizeType = {
     /** Dimensions are fixed */
-    FIXED = 'fixed',
+    FIXED: 'fixed',
     /** Dimensions are calculated based on the parent element */
-    STRETCH = 'stretch',
-}
+    STRETCH: 'stretch',
+} as const;
+
+export type SizeType = (typeof SizeType)[keyof typeof SizeType];
 
 export const ReadingDirection = {
     LTR: 'ltr',

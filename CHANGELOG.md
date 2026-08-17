@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-08-17
+
+### Changed
+
+- 公開のたびにREADMEの更新が必要にならないよう、状態説明から固定バージョン表記を削除した。
+
+### Fixed
+
+- Viteなど`isolatedModules`を有効にするTypeScript利用側でも`SizeType.STRETCH`を参照できるよう、公開するサイズ種別をambient `const enum`から実行時定数と対応する型へ変更した。
+
 ## [0.2.2] - 2026-08-16
 
 ### Fixed
