@@ -14,6 +14,31 @@ export interface ReflectionCurlFold {
 
 const REST_EPSILON = 2;
 
+const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
+
+/**
+ * Resolve the virtual free-edge grab height from an arbitrary press position.
+ * A press near the spine is biased toward the matching top/bottom corner,
+ * while the page centre and actual free edge keep their exact Y coordinate.
+ */
+export const calculateCurlAnchorY = (
+    start: Point,
+    pageWidth: number,
+    pageHeight: number,
+): number => {
+    const y = Math.max(0, Math.min(pageHeight, start.y));
+    const halfHeight = pageHeight / 2;
+    if (halfHeight === 0 || pageWidth <= 0) return y;
+
+    const spineZone = pageWidth * 0.35;
+    const spineInfluence = 1 - clampUnit(Math.max(0, start.x) / spineZone);
+    const verticalInfluence = clampUnit(Math.abs(y - halfHeight) / halfHeight);
+    const corner = y < halfHeight ? 0 : pageHeight;
+    const influence = spineInfluence * verticalInfluence;
+
+    return y + (corner - y) * influence;
+};
+
 const limitPointToCircle = (center: Point, radius: number, point: Point): Point => {
     const dx = point.x - center.x;
     const dy = point.y - center.y;

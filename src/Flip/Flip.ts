@@ -4,6 +4,7 @@ import { PageRect, Point } from '../BasicTypes';
 import { FlipCalculation } from './FlipCalculation';
 import { Page, PageDensity } from '../Page/Page';
 import {
+    calculateCurlAnchorY,
     calculateReflectionCurl,
     easeOutCubic,
     getProgrammaticTargetY,
@@ -150,7 +151,7 @@ export class Flip {
             const pageStart = this.render.convertToPage(globalPos, direction);
             this.curlAnchor = {
                 x: rect.pageWidth,
-                y: Math.max(0, Math.min(rect.height, pageStart.y)),
+                y: calculateCurlAnchorY(pageStart, rect.pageWidth, rect.height),
             };
             this.calc = new FlipCalculation(
                 direction,

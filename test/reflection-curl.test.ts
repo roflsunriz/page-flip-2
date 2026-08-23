@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import {
+    calculateCurlAnchorY,
     calculatePointerAlignedCreaseDistance,
     calculateReflectionCurl,
     clampCurlTarget,
@@ -93,5 +94,20 @@ describe('rounded curl geometry', () => {
         expect((top?.creaseMid.y ?? 0) + (bottom?.creaseMid.y ?? 0)).toBeCloseTo(height, 8);
         expect(top?.creaseDirection.x).toBeCloseTo(-(bottom?.creaseDirection.x ?? 0), 8);
         expect(top?.creaseDirection.y).toBeCloseTo(bottom?.creaseDirection.y ?? 0, 8);
+    });
+
+    it('biases spine-side starts toward the matching corner without changing the centre or free edge', () => {
+        const upperStart = { x: 0, y: height * 0.15 };
+        const lowerStart = { x: 0, y: height * 0.85 };
+        const upperAnchor = calculateCurlAnchorY(upperStart, width, height);
+        const lowerAnchor = calculateCurlAnchorY(lowerStart, width, height);
+
+        expect(upperAnchor).toBeLessThan(upperStart.y);
+        expect(lowerAnchor).toBeGreaterThan(lowerStart.y);
+        expect(upperAnchor + lowerAnchor).toBeCloseTo(height, 8);
+        expect(calculateCurlAnchorY({ x: 0, y: height / 2 }, width, height)).toBe(height / 2);
+        expect(calculateCurlAnchorY({ x: width, y: height * 0.15 }, width, height)).toBe(
+            height * 0.15,
+        );
     });
 });
