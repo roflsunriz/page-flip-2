@@ -9,6 +9,7 @@ import {
     easeOutCubic,
     getProgrammaticTargetY,
     ReflectionCurlFold,
+    shouldTrackCurlAnchorY,
 } from './ReflectionCurl';
 
 /**
@@ -56,6 +57,8 @@ export class Flip {
 
     private calc: FlipCalculation = null;
     private curlAnchor: Point = null;
+    private curlAnchorStartX = 0;
+    private curlAnchorTracksPointer = false;
     private curlFold: ReflectionCurlFold = null;
 
     private state: FlippingState = FlippingState.READ;
@@ -149,6 +152,8 @@ export class Flip {
 
             this.render.setDirection(direction);
             const pageStart = this.render.convertToPage(globalPos, direction);
+            this.curlAnchorTracksPointer = shouldTrackCurlAnchorY(pageStart.x, rect.pageWidth);
+            this.curlAnchorStartX = pageStart.x;
             this.curlAnchor = {
                 x: rect.pageWidth,
                 y: calculateCurlAnchorY(pageStart, rect.pageWidth, rect.height),
@@ -175,6 +180,13 @@ export class Flip {
         if (this.calc === null) return; // Flipping process not started
 
         const rect = this.getBoundsRect();
+        if (this.curlAnchor !== null && this.curlAnchorTracksPointer) {
+            this.curlAnchor.y = calculateCurlAnchorY(
+                { x: this.curlAnchorStartX, y: pagePos.y },
+                rect.pageWidth,
+                rect.height,
+            );
+        }
         this.curlFold =
             this.curlAnchor === null
                 ? null
@@ -475,6 +487,8 @@ export class Flip {
 
         this.calc = null;
         this.curlAnchor = null;
+        this.curlAnchorStartX = 0;
+        this.curlAnchorTracksPointer = false;
         this.curlFold = null;
         this.flippingPage = null;
         this.bottomPage = null;

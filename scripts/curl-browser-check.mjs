@@ -145,7 +145,7 @@ const hoverCorner = async (key, edge, corner) => {
     return point;
 };
 
-const dragFromSpine = async (key, edge, verticalRatio) => {
+const dragFromSpine = async (key, edge, verticalRatio, targetVerticalRatio = verticalRatio) => {
     const points = await evaluate(`(() => {
         const root = document.querySelector('[data-book="${key}"]');
         root.scrollIntoView({ block: 'center' });
@@ -162,7 +162,7 @@ const dragFromSpine = async (key, edge, verticalRatio) => {
             },
             target: {
                 x: freeEdgeX + (fromRight ? -rect.pageWidth * 0.15 : rect.pageWidth * 0.15),
-                y: surfaceRect.top + rect.top + rect.height * ${verticalRatio},
+                y: surfaceRect.top + rect.top + rect.height * ${targetVerticalRatio},
             },
         };
     })()`);
@@ -262,8 +262,41 @@ for (const diagnostic of [
     { name: 'rtl-spine-upper-mid', key: 'rtl', edge: 'left', verticalRatio: 0.4 },
     { name: 'rtl-spine-lower-mid', key: 'rtl', edge: 'left', verticalRatio: 0.6 },
     { name: 'rtl-spine-bottom', key: 'rtl', edge: 'left', verticalRatio: 0.85 },
+    {
+        name: 'ltr-spine-bottom-to-top',
+        key: 'ltr',
+        edge: 'right',
+        verticalRatio: 0.85,
+        targetVerticalRatio: 0.05,
+    },
+    {
+        name: 'ltr-spine-top-to-bottom',
+        key: 'ltr',
+        edge: 'right',
+        verticalRatio: 0.15,
+        targetVerticalRatio: 0.95,
+    },
+    {
+        name: 'rtl-spine-bottom-to-top',
+        key: 'rtl',
+        edge: 'left',
+        verticalRatio: 0.85,
+        targetVerticalRatio: 0.05,
+    },
+    {
+        name: 'rtl-spine-top-to-bottom',
+        key: 'rtl',
+        edge: 'left',
+        verticalRatio: 0.15,
+        targetVerticalRatio: 0.95,
+    },
 ]) {
-    const target = await dragFromSpine(diagnostic.key, diagnostic.edge, diagnostic.verticalRatio);
+    const target = await dragFromSpine(
+        diagnostic.key,
+        diagnostic.edge,
+        diagnostic.verticalRatio,
+        diagnostic.targetVerticalRatio,
+    );
     await waitFor(
         `document.querySelector('[data-book="${diagnostic.key}"] .page-flip-2__curl-canvas').style.display === 'block'`,
     );

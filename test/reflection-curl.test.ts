@@ -6,6 +6,7 @@ import {
     calculateReflectionCurl,
     clampCurlTarget,
     getProgrammaticTargetY,
+    shouldTrackCurlAnchorY,
 } from '../src/Flip/ReflectionCurl';
 
 const width = 400;
@@ -114,5 +115,18 @@ describe('rounded curl geometry', () => {
         expect(calculateCurlAnchorY({ x: width, y: height * 0.15 }, width, height)).toBe(
             height * 0.15,
         );
+    });
+
+    it('tracks the current pointer Y for interior starts but preserves a real free-edge grab', () => {
+        expect(shouldTrackCurlAnchorY(0, width)).toBe(true);
+        expect(shouldTrackCurlAnchorY(width * 0.5, width)).toBe(true);
+        expect(shouldTrackCurlAnchorY(width * 0.84, width)).toBe(true);
+        expect(shouldTrackCurlAnchorY(width * 0.85, width)).toBe(false);
+        expect(shouldTrackCurlAnchorY(width, width)).toBe(false);
+
+        const currentTop = calculateCurlAnchorY({ x: 0, y: height * 0.05 }, width, height);
+        const currentBottom = calculateCurlAnchorY({ x: 0, y: height * 0.95 }, width, height);
+        expect(currentTop).toBe(0);
+        expect(currentBottom).toBe(height);
     });
 });
