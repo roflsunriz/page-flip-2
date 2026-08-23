@@ -294,12 +294,16 @@ await waitFor(`window.demoBooks.ltr.getState() === 'read'`);
 const spineDragStates = {};
 for (const diagnostic of [
     { name: 'ltr-spine-top', key: 'ltr', edge: 'right', verticalRatio: 0.15 },
+    { name: 'ltr-spine-top-boundary', key: 'ltr', edge: 'right', verticalRatio: 0.2 },
     { name: 'ltr-spine-upper-mid', key: 'ltr', edge: 'right', verticalRatio: 0.4 },
     { name: 'ltr-spine-lower-mid', key: 'ltr', edge: 'right', verticalRatio: 0.6 },
+    { name: 'ltr-spine-bottom-boundary', key: 'ltr', edge: 'right', verticalRatio: 0.8 },
     { name: 'ltr-spine-bottom', key: 'ltr', edge: 'right', verticalRatio: 0.85 },
     { name: 'rtl-spine-top', key: 'rtl', edge: 'left', verticalRatio: 0.15 },
+    { name: 'rtl-spine-top-boundary', key: 'rtl', edge: 'left', verticalRatio: 0.2 },
     { name: 'rtl-spine-upper-mid', key: 'rtl', edge: 'left', verticalRatio: 0.4 },
     { name: 'rtl-spine-lower-mid', key: 'rtl', edge: 'left', verticalRatio: 0.6 },
+    { name: 'rtl-spine-bottom-boundary', key: 'rtl', edge: 'left', verticalRatio: 0.8 },
     { name: 'rtl-spine-bottom', key: 'rtl', edge: 'left', verticalRatio: 0.85 },
     {
         name: 'ltr-spine-bottom-to-top',

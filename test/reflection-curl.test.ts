@@ -96,7 +96,7 @@ describe('rounded curl geometry', () => {
         expect(top?.creaseDirection.y).toBeCloseTo(bottom?.creaseDirection.y ?? 0, 8);
     });
 
-    it('biases spine-side starts toward the matching corner without changing the centre or free edge', () => {
+    it('limits the spine-side corner bias to the top and bottom 20 percent', () => {
         const upperStart = { x: 0, y: height * 0.15 };
         const lowerStart = { x: 0, y: height * 0.85 };
         const upperAnchor = calculateCurlAnchorY(upperStart, width, height);
@@ -106,8 +106,10 @@ describe('rounded curl geometry', () => {
         expect(lowerAnchor).toBeGreaterThan(lowerStart.y);
         expect(upperAnchor + lowerAnchor).toBeCloseTo(height, 8);
         expect(calculateCurlAnchorY({ x: 0, y: height / 2 }, width, height)).toBe(height / 2);
-        expect(calculateCurlAnchorY({ x: 0, y: height * 0.4 }, width, height)).toBe(0);
-        expect(calculateCurlAnchorY({ x: 0, y: height * 0.6 }, width, height)).toBe(height);
+        expect(calculateCurlAnchorY({ x: 0, y: height * 0.2 }, width, height)).toBe(height * 0.2);
+        expect(calculateCurlAnchorY({ x: 0, y: height * 0.4 }, width, height)).toBe(height * 0.4);
+        expect(calculateCurlAnchorY({ x: 0, y: height * 0.6 }, width, height)).toBe(height * 0.6);
+        expect(calculateCurlAnchorY({ x: 0, y: height * 0.8 }, width, height)).toBe(height * 0.8);
         expect(calculateCurlAnchorY({ x: width / 2, y: height * 0.4 }, width, height)).toBe(
             height * 0.4,
         );
@@ -116,10 +118,11 @@ describe('rounded curl geometry', () => {
         );
     });
 
-    it('maps the current pointer Y to the matching corner independently of press history', () => {
+    it('maps the current pointer Y inside an edge zone to the matching corner independently of press history', () => {
         const currentTop = calculateCurlAnchorY({ x: 0, y: height * 0.05 }, width, height);
         const currentBottom = calculateCurlAnchorY({ x: 0, y: height * 0.95 }, width, height);
-        expect(currentTop).toBe(0);
-        expect(currentBottom).toBe(height);
+        expect(currentTop).toBeLessThan(height * 0.01);
+        expect(currentBottom).toBeGreaterThan(height * 0.99);
+        expect(currentTop + currentBottom).toBeCloseTo(height, 8);
     });
 });

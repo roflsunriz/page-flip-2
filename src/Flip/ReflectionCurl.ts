@@ -18,8 +18,8 @@ const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
 
 /**
  * Resolve the virtual free-edge grab height from an arbitrary press position.
- * A press near the spine is biased toward the matching top/bottom corner,
- * while the page centre and actual free edge keep their exact Y coordinate.
+ * A press near the spine and a horizontal edge is biased toward the matching
+ * corner. The middle 60% keeps the exact Y coordinate for a straight roll.
  */
 export const calculateCurlAnchorY = (
     start: Point,
@@ -27,18 +27,17 @@ export const calculateCurlAnchorY = (
     pageHeight: number,
 ): number => {
     const y = Math.max(0, Math.min(pageHeight, start.y));
-    const halfHeight = pageHeight / 2;
-    if (halfHeight === 0 || pageWidth <= 0) return y;
+    if (pageHeight <= 0 || pageWidth <= 0) return y;
 
     const spineZone = pageWidth * 0.35;
     const spineInfluence = 1 - clampUnit(Math.max(0, start.x) / spineZone);
-    // Keep only a narrow band around the vertical centre as a straight roll.
-    // Outside it, a spine-side grab must unambiguously select the matching corner.
-    const centerTransition = pageHeight * 0.08;
-    const verticalInfluence = clampUnit(
-        centerTransition === 0 ? 0 : Math.abs(y - halfHeight) / centerTransition,
-    );
-    const corner = y < halfHeight ? 0 : pageHeight;
+    const cornerZone = pageHeight * 0.2;
+    const corner = y < pageHeight / 2 ? 0 : pageHeight;
+    const edgeDistance = Math.abs(y - corner);
+    const edgeProgress = clampUnit(edgeDistance / cornerZone);
+    // Smoothly remove the corner bias at the 20% boundary so crossing it does
+    // not make the page shape jump. Outside the edge zones this becomes zero.
+    const verticalInfluence = 1 - edgeProgress * edgeProgress * (3 - 2 * edgeProgress);
     const influence = spineInfluence * verticalInfluence;
 
     return y + (corner - y) * influence;
