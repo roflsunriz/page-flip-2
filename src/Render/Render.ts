@@ -138,11 +138,13 @@ export abstract class Render {
             const frameIndex = Math.round(
                 (timer - this.animation.startedAt) / this.animation.durationFrame,
             );
+            const lastFrameIndex = this.animation.frames.length - 1;
 
-            if (frameIndex < this.animation.frames.length) {
+            if (frameIndex < lastFrameIndex) {
                 this.animation.frames[frameIndex]();
             } else {
                 const onAnimateEnd = this.animation.onAnimateEnd;
+                this.animation.frames[lastFrameIndex]();
                 this.animation = null;
                 onAnimateEnd();
             }
@@ -207,7 +209,7 @@ export abstract class Render {
         this.animation = {
             frames,
             duration,
-            durationFrame: duration / frames.length,
+            durationFrame: duration / Math.max(1, frames.length - 1),
             onAnimateEnd,
             startedAt: null,
         };

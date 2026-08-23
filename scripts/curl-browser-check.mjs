@@ -124,6 +124,38 @@ const drag = async (key, edge, distanceRatio) => {
     return points.target;
 };
 
+const hoverCorner = async (key, edge, corner) => {
+    const point = await evaluate(`(() => {
+        const root = document.querySelector('[data-book="${key}"]');
+        root.scrollIntoView({ block: 'center' });
+        const surface = root.querySelector('.page-flip-2__block');
+        const surfaceRect = surface.getBoundingClientRect();
+        const rect = window.demoBooks[${JSON.stringify(key)}].getRender().getRect();
+        return {
+            x: surfaceRect.left + rect.left + (${JSON.stringify(edge)} === 'right' ? rect.width - 2 : 2),
+            y: surfaceRect.top + rect.top + (${JSON.stringify(corner)} === 'bottom' ? rect.height - 2 : 2),
+        };
+    })()`);
+    await Bun.sleep(100);
+    await command('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: point.x,
+        y: point.y,
+    });
+    return point;
+};
+
+const addPointerMarker = (point) =>
+    evaluate(`(() => {
+        document.querySelector('[data-curl-pointer-marker]')?.remove();
+        const marker = document.createElement('div');
+        marker.setAttribute('data-curl-pointer-marker', '');
+        marker.style.cssText = 'position:fixed;width:12px;height:12px;margin:-6px 0 0 -6px;border:2px solid #00ff66;border-radius:50%;background:#001a0dcc;z-index:99999;pointer-events:none;';
+        marker.style.left = '${point.x}px';
+        marker.style.top = '${point.y}px';
+        document.body.appendChild(marker);
+    })()`);
+
 const release = (point) =>
     command('Input.dispatchMouseEvent', {
         type: 'mouseReleased',
@@ -147,6 +179,46 @@ const loaded = waitForEvent('Page.loadEventFired');
 await command('Page.navigate', { url: pageUrl });
 await loaded;
 await Bun.sleep(500);
+
+await evaluate(`(() => {
+    const style = document.createElement('style');
+    style.setAttribute('data-corner-diagnostic', '');
+    style.textContent = '[data-book="ltr"] [data-page]:nth-child(even) { background: linear-gradient(to bottom, #ff1744 0 50%, #2979ff 50% 100%); }';
+    document.head.appendChild(style);
+})()`);
+const bottomCornerPoint = await hoverCorner('ltr', 'right', 'bottom');
+await waitFor(
+    `document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display === 'block'`,
+);
+const bottomCornerState = await evaluate(`({
+    state: window.demoBooks.ltr.getState(),
+    canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
+})`);
+await addPointerMarker(bottomCornerPoint);
+await screenshot('curl-corner-bottom.png');
+await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+await waitFor(`window.demoBooks.ltr.getState() === 'read'`);
+
+const topCornerPoint = await hoverCorner('ltr', 'right', 'top');
+await waitFor(
+    `document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display === 'block'`,
+);
+const topCornerState = await evaluate(`({
+    state: window.demoBooks.ltr.getState(),
+    canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
+})`);
+await addPointerMarker(topCornerPoint);
+await screenshot('curl-corner-top.png');
+await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+await waitFor(`window.demoBooks.ltr.getState() === 'read'`);
+await evaluate(`(() => {
+    document.querySelector('[data-curl-pointer-marker]')?.remove();
+    document.querySelector('[data-corner-diagnostic]')?.remove();
+    window.demoBooks.ltr.destroy();
+    window.demoBooks.rtl.destroy();
+    window.demoBooks = window.resetDemoBooks();
+})()`);
+await Bun.sleep(200);
 
 const htmlTextureProbe = await evaluate(`(async () => {
     const rect = window.demoBooks.ltr.getRender().getRect();
@@ -342,6 +414,12 @@ const programmaticLtr = await evaluate(`({
 })`);
 
 const failures = [];
+if (bottomCornerState.state !== 'fold_corner' || bottomCornerState.canvasDisplay !== 'block') {
+    failures.push('The bottom corner hover must render through the rounded curl');
+}
+if (topCornerState.state !== 'fold_corner' || topCornerState.canvasDisplay !== 'block') {
+    failures.push('The top corner hover must render through the rounded curl');
+}
 if (!htmlTextureProbe.ready || htmlTextureProbe.width <= 0 || htmlTextureProbe.height <= 0) {
     failures.push('The lazy HTML texture chunk must produce a drawable page image');
 }
@@ -411,6 +489,8 @@ if (failures.length > 0) {
 console.log(
     JSON.stringify(
         {
+            bottomCornerState,
+            topCornerState,
             htmlTextureProbe,
             texturePreparationCalls,
             ltrWhilePreparing,

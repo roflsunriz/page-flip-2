@@ -54,3 +54,52 @@ it('paints the configured Canvas background without drawing a spine shadow', () 
 
     render.stop();
 });
+
+it('executes the terminal animation frame when a duration is shorter than one browser frame', () => {
+    const queuedFrames: FrameRequestCallback[] = [];
+    globalThis.requestAnimationFrame = mock((callback: FrameRequestCallback) => {
+        queuedFrames.push(callback);
+        return queuedFrames.length;
+    });
+
+    const context = {
+        fillStyle: '',
+        fillRect: mock(() => undefined),
+        save: mock(() => undefined),
+        restore: mock(() => undefined),
+    } as unknown as CanvasRenderingContext2D;
+    const canvas = {
+        width: 200,
+        height: 300,
+        getContext: () => context,
+    } as unknown as HTMLCanvasElement;
+    const settings = new Settings().getSettings({
+        width: 100,
+        height: 200,
+        drawShadow: false,
+    });
+    const app = {
+        getSettings: () => settings,
+        getUI: () => ({
+            getDistElement: () => ({ offsetWidth: 200, offsetHeight: 300 }),
+        }),
+        isRtl: () => false,
+        updateOrientation: (): void => undefined,
+    } as unknown as PageFlip;
+    const render = new CanvasRender(app, settings, canvas);
+    const firstFrame = mock(() => undefined);
+    const terminalFrame = mock(() => undefined);
+    const completed = mock(() => undefined);
+
+    render.start();
+    queuedFrames.shift()?.(0);
+    render.startAnimation([firstFrame, terminalFrame], 1, completed);
+    queuedFrames.shift()?.(10);
+    queuedFrames.shift()?.(26);
+
+    expect(firstFrame).toHaveBeenCalledTimes(1);
+    expect(terminalFrame).toHaveBeenCalledTimes(1);
+    expect(completed).toHaveBeenCalledTimes(1);
+
+    render.stop();
+});

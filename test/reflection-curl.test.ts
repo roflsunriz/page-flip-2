@@ -74,4 +74,24 @@ describe('rounded curl geometry', () => {
             }
         }
     });
+
+    it('keeps top and bottom corner folds as vertical mirror images', () => {
+        const top = calculateReflectionCurl(
+            { x: width, y: 0 },
+            { x: width - 80, y: 60 },
+            width,
+            height,
+        );
+        const bottom = calculateReflectionCurl(
+            { x: width, y: height },
+            { x: width - 80, y: height - 60 },
+            width,
+            height,
+        );
+
+        expect(top?.dragDistance).toBeCloseTo(bottom?.dragDistance ?? 0, 8);
+        expect((top?.creaseMid.y ?? 0) + (bottom?.creaseMid.y ?? 0)).toBeCloseTo(height, 8);
+        expect(top?.creaseDirection.x).toBeCloseTo(-(bottom?.creaseDirection.x ?? 0), 8);
+        expect(top?.creaseDirection.y).toBeCloseTo(bottom?.creaseDirection.y ?? 0, 8);
+    });
 });
