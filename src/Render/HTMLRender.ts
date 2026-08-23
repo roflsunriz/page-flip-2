@@ -1,4 +1,4 @@
-import { Orientation, Render } from './Render';
+import { CurlRenderMode, Orientation, Render } from './Render';
 import { PageFlip } from '../PageFlip';
 import { FlipDirection } from '../Flip/Flip';
 import { PageDensity, PageOrientation } from '../Page/Page';
@@ -312,10 +312,12 @@ export class HTMLRender extends Render {
     /**
      * Draw the next page at the time of flipping
      */
-    private drawBottomPage(roundedCurl: boolean): void {
+    private drawBottomPage(curlMode: CurlRenderMode): void {
         if (this.bottomPage === null) return;
 
-        if (roundedCurl) {
+        if (curlMode === CurlRenderMode.WAITING) return;
+
+        if (curlMode === CurlRenderMode.ROUNDED) {
             this.bottomPage.simpleDraw(
                 this.direction === FlipDirection.BACK
                     ? PageOrientation.LEFT
@@ -339,17 +341,32 @@ export class HTMLRender extends Render {
         }
     }
 
+    /** Remove persistent styles left by the legacy DOM curl while WebGL owns the turn. */
+    private hideLegacyCurl(): void {
+        if (this.flippingPage !== null) {
+            (this.flippingPage as HTMLPage).getElement().style.cssText = 'display: none';
+        }
+
+        this.outerShadow.style.display = 'none';
+        this.innerShadow.style.display = 'none';
+        this.hardShadow.style.display = 'none';
+        this.hardInnerShadow.style.display = 'none';
+    }
+
     protected drawFrame(): void {
         this.clear();
-        const roundedCurl = this.drawRoundedCurl();
+        const curlMode = this.drawCurl();
+        const suppressLegacyCurl = curlMode !== CurlRenderMode.LEGACY;
 
         this.drawLeftPage();
 
         this.drawRightPage();
 
-        this.drawBottomPage(roundedCurl);
+        this.drawBottomPage(curlMode);
 
-        if (!roundedCurl && this.flippingPage != null) {
+        if (suppressLegacyCurl) {
+            this.hideLegacyCurl();
+        } else if (this.flippingPage != null) {
             (this.flippingPage as HTMLPage).getElement().style.zIndex = (
                 this.getSettings().startZIndex + 5
             ).toString(10);
@@ -357,7 +374,7 @@ export class HTMLRender extends Render {
             this.flippingPage.draw();
         }
 
-        if (!roundedCurl && this.shadow != null && this.flippingPage !== null) {
+        if (!suppressLegacyCurl && this.shadow != null && this.flippingPage !== null) {
             if (this.flippingPage.getDrawingDensity() === PageDensity.SOFT) {
                 this.drawOuterShadow();
                 this.drawInnerShadow();

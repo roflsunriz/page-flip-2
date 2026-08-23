@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import {
+    calculatePointerAlignedCreaseDistance,
     calculateReflectionCurl,
     clampCurlTarget,
     getProgrammaticTargetY,
@@ -57,5 +58,20 @@ describe('rounded curl geometry', () => {
         expect(getProgrammaticTargetY(height, 0.5, height)).toBeCloseTo(height / 2, 8);
         expect(getProgrammaticTargetY(0, 0, height)).toBe(0);
         expect(getProgrammaticTargetY(height, 1, height)).toBeCloseTo(height, 8);
+    });
+
+    it('offsets the cylinder crease so the grabbed edge reaches the pointer', () => {
+        for (const radius of [20, 80, 160]) {
+            for (const dragDistance of [5, 50, 200, 500]) {
+                const creaseDistance = calculatePointerAlignedCreaseDistance(dragDistance, radius);
+                const angle = creaseDistance / radius;
+                const renderedDisplacement =
+                    angle <= Math.PI
+                        ? creaseDistance - radius * Math.sin(angle)
+                        : 2 * creaseDistance - Math.PI * radius;
+
+                expect(renderedDisplacement).toBeCloseTo(dragDistance, 4);
+            }
+        }
     });
 });

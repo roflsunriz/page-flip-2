@@ -1,4 +1,4 @@
-import { ReflectionCurlFold } from '../Flip/ReflectionCurl';
+import { calculatePointerAlignedCreaseDistance, ReflectionCurlFold } from '../Flip/ReflectionCurl';
 
 export const CURL_VERTICAL_PADDING_RATIO = 0.18;
 
@@ -326,14 +326,17 @@ export class WebGLCurlRenderer {
         const radius = Math.max(0.05, maximumRadius * radiusShape);
         const normalX = -fold.creaseDirection.y;
         const normalY = fold.creaseDirection.x;
+        const creaseDistance = calculatePointerAlignedCreaseDistance(fold.dragDistance, radius);
+        const creaseOffset = creaseDistance - fold.dragDistance / 2;
+        const creaseMidX = fold.creaseMid.x - normalX * creaseOffset;
+        const creaseMidY = fold.creaseMid.y - normalY * creaseOffset;
         const horizontalSign = turnFromRight ? 1 : -1;
         const count = this.textureCoordinates.length / 2;
 
         for (let index = 0; index < count; index += 1) {
             const pageX = this.textureCoordinates[index * 2] * this.width;
             const pageY = this.textureCoordinates[index * 2 + 1] * this.height;
-            const distance =
-                (pageX - fold.creaseMid.x) * normalX + (pageY - fold.creaseMid.y) * normalY;
+            const distance = (pageX - creaseMidX) * normalX + (pageY - creaseMidY) * normalY;
             let warpedX = pageX;
             let warpedY = pageY;
             let depth = 0;

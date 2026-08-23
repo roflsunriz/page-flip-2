@@ -1,4 +1,4 @@
-import { Orientation, Render } from './Render';
+import { CurlRenderMode, Orientation, Render } from './Render';
 import { PageFlip } from '../PageFlip';
 import { FlipDirection } from '../Flip/Flip';
 import { PageOrientation } from '../Page/Page';
@@ -27,7 +27,9 @@ export class CanvasRender extends Render {
     }
 
     protected drawFrame(): void {
-        const roundedCurl = this.drawRoundedCurl();
+        const curlMode = this.drawCurl();
+        const roundedCurl = curlMode === CurlRenderMode.ROUNDED;
+        const legacyCurl = curlMode === CurlRenderMode.LEGACY;
         this.clear();
         this.ctx.save();
 
@@ -48,7 +50,7 @@ export class CanvasRender extends Render {
 
         if (this.rightPage != null) this.rightPage.simpleDraw(PageOrientation.RIGHT);
 
-        if (this.bottomPage != null) {
+        if (this.bottomPage != null && curlMode !== CurlRenderMode.WAITING) {
             if (roundedCurl) {
                 this.bottomPage.simpleDraw(
                     this.direction === FlipDirection.BACK
@@ -62,9 +64,9 @@ export class CanvasRender extends Render {
 
         if (this.getSettings().drawShadow) this.drawBookShadow();
 
-        if (!roundedCurl && this.flippingPage != null) this.flippingPage.draw();
+        if (legacyCurl && this.flippingPage != null) this.flippingPage.draw();
 
-        if (!roundedCurl && this.shadow != null) {
+        if (legacyCurl && this.shadow != null) {
             this.drawOuterShadow();
             this.drawInnerShadow();
         }

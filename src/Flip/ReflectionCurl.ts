@@ -8,6 +8,8 @@ export interface ReflectionCurlFold {
     creaseMid: Point;
     /** Unit vector running along the crease. */
     creaseDirection: Point;
+    /** Euclidean distance from the grabbed free-edge point to the pointer. */
+    dragDistance: number;
 }
 
 const REST_EPSILON = 2;
@@ -75,7 +77,32 @@ export const calculateReflectionCurl = (
         progress,
         creaseMid,
         creaseDirection: { x: -normal.y, y: normal.x },
+        dragDistance: distance,
     };
+};
+
+/**
+ * Distance from the adjusted crease to the grabbed edge. It compensates for
+ * the cylinder arc so the rendered free edge lands exactly on the pointer.
+ */
+export const calculatePointerAlignedCreaseDistance = (
+    dragDistance: number,
+    radius: number,
+): number => {
+    if (dragDistance <= 0) return 0;
+
+    const halfTurn = Math.PI * radius;
+    if (dragDistance >= halfTurn) return (dragDistance + halfTurn) / 2;
+
+    let low = 0;
+    let high = halfTurn;
+    for (let iteration = 0; iteration < 24; iteration += 1) {
+        const candidate = (low + high) / 2;
+        const displacement = candidate - radius * Math.sin(candidate / radius);
+        if (displacement < dragDistance) low = candidate;
+        else high = candidate;
+    }
+    return (low + high) / 2;
 };
 
 /** Gentle landing used after releasing a drag or starting a scripted turn. */

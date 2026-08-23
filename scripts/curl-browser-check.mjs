@@ -160,16 +160,78 @@ const htmlTextureProbe = await evaluate(`(async () => {
     };
 })()`);
 
+await evaluate(`(() => {
+    const page = window.demoBooks.ltr.getPage(2);
+    const original = page.getTextureSource.bind(page);
+    page.__curlOriginalTextureSource = original;
+    page.__curlTextureCalls = 0;
+    page.getTextureSource = async (...args) => {
+        page.__curlTextureCalls += 1;
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        return original(...args);
+    };
+})()`);
+
 const ltrPoint = await drag('ltr', 'right', 0.9);
+for (let move = 0; move < 4; move += 1) {
+    await Bun.sleep(20);
+    await command('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: ltrPoint.x,
+        y: ltrPoint.y,
+        button: 'left',
+        buttons: 1,
+    });
+}
+await Bun.sleep(75);
+const ltrWhilePreparing = await evaluate(`(() => {
+    const root = document.querySelector('[data-book="ltr"]');
+    const pages = [...root.querySelectorAll('[data-page]')];
+    const shadows = [...root.querySelectorAll(
+        '.page-flip-2__outer-shadow, .page-flip-2__inner-shadow, .page-flip-2__hard-shadow, .page-flip-2__hard-inner-shadow'
+    )];
+    return {
+        canvasDisplay: root.querySelector('.page-flip-2__curl-canvas').style.display,
+        currentPageDisplay: pages[1].style.display,
+        legacyFlippingDisplay: pages[2].style.display,
+        shadowDisplays: shadows.map((shadow) => shadow.style.display),
+    };
+})()`);
 await waitFor(
     `document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display === 'block'`,
 );
+const texturePreparationCalls = await evaluate(`(() => {
+    const page = window.demoBooks.ltr.getPage(2);
+    const calls = page.__curlTextureCalls;
+    page.getTextureSource = page.__curlOriginalTextureSource;
+    delete page.__curlOriginalTextureSource;
+    delete page.__curlTextureCalls;
+    return calls;
+})()`);
+await evaluate(`(() => {
+    const marker = document.createElement('div');
+    marker.setAttribute('data-curl-pointer-marker', '');
+    marker.style.cssText = 'position:fixed;width:12px;height:12px;margin:-6px 0 0 -6px;border:2px solid #00ff66;border-radius:50%;background:#001a0dcc;z-index:99999;pointer-events:none;';
+    marker.style.left = '${ltrPoint.x}px';
+    marker.style.top = '${ltrPoint.y}px';
+    document.body.appendChild(marker);
+})()`);
 await screenshot('curl-ltr.png');
-const ltrDuring = await evaluate(`({
-    state: window.demoBooks.ltr.getState(),
-    page: window.demoBooks.ltr.getCurrentPageIndex(),
-    canvases: document.querySelectorAll('[data-book="ltr"] .page-flip-2__curl-canvas').length,
-})`);
+await evaluate(`document.querySelector('[data-curl-pointer-marker]')?.remove()`);
+const ltrDuring = await evaluate(`(() => {
+    const root = document.querySelector('[data-book="ltr"]');
+    const pages = [...root.querySelectorAll('[data-page]')];
+    const shadows = [...root.querySelectorAll(
+        '.page-flip-2__outer-shadow, .page-flip-2__inner-shadow, .page-flip-2__hard-shadow, .page-flip-2__hard-inner-shadow'
+    )];
+    return {
+        state: window.demoBooks.ltr.getState(),
+        page: window.demoBooks.ltr.getCurrentPageIndex(),
+        canvases: root.querySelectorAll('.page-flip-2__curl-canvas').length,
+        legacyFlippingDisplay: pages[2].style.display,
+        shadowDisplays: shadows.map((shadow) => shadow.style.display),
+    };
+})()`);
 await release(ltrPoint);
 await Bun.sleep(250);
 const ltrAfterCancel = await evaluate(`({
@@ -283,8 +345,25 @@ const failures = [];
 if (!htmlTextureProbe.ready || htmlTextureProbe.width <= 0 || htmlTextureProbe.height <= 0) {
     failures.push('The lazy HTML texture chunk must produce a drawable page image');
 }
+if (
+    ltrWhilePreparing.canvasDisplay !== 'none' ||
+    ltrWhilePreparing.currentPageDisplay !== 'block' ||
+    ltrWhilePreparing.legacyFlippingDisplay !== 'none' ||
+    ltrWhilePreparing.shadowDisplays.some((display) => display !== 'none')
+) {
+    failures.push('Texture preparation must freeze the current page without legacy curl remnants');
+}
+if (texturePreparationCalls !== 1) {
+    failures.push('Repeated pointer moves must not restart the same page texture preparation');
+}
 if (ltrDuring.state !== 'user_fold' || ltrDuring.page !== 0 || ltrDuring.canvases !== 1) {
     failures.push('LTR must use one rounded canvas while dragging');
+}
+if (
+    ltrDuring.legacyFlippingDisplay !== 'none' ||
+    ltrDuring.shadowDisplays.some((display) => display !== 'none')
+) {
+    failures.push('Rounded rendering must hide the legacy page and every legacy shadow');
 }
 if (ltrAfterCancel.state !== 'read' || ltrAfterCancel.page !== 0) {
     failures.push('LTR drag below the threshold must settle back without changing the page');
@@ -333,6 +412,8 @@ console.log(
     JSON.stringify(
         {
             htmlTextureProbe,
+            texturePreparationCalls,
+            ltrWhilePreparing,
             ltrDuring,
             ltrAfterCancel,
             ltrAfterComplete,

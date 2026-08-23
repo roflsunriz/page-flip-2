@@ -4,7 +4,7 @@ import { FlipDirection } from '../Flip/Flip';
 import { Page, PageDensity, PageOrientation } from '../Page/Page';
 import { DisplayMode, FlipSetting, SizeType } from '../Settings';
 import { ReflectionCurlFold } from '../Flip/ReflectionCurl';
-import { CurlOverlay } from './CurlOverlay';
+import { CurlOverlay, CurlOverlayState } from './CurlOverlay';
 
 type FrameAction = () => void;
 type AnimationSuccessAction = () => void;
@@ -50,6 +50,12 @@ type AnimationProcess = {
 export const enum Orientation {
     PORTRAIT = 'portrait',
     LANDSCAPE = 'landscape',
+}
+
+export const enum CurlRenderMode {
+    LEGACY,
+    WAITING,
+    ROUNDED,
 }
 
 /**
@@ -493,21 +499,26 @@ export abstract class Render {
         this.requestRender();
     }
 
-    /** True when both page textures are ready to replace the legacy soft drawing. */
-    protected isRoundedCurlReady(): boolean {
-        return (
-            this.curlFold !== null &&
-            this.flippingPage !== null &&
-            this.flippingPage.getDrawingDensity() === PageDensity.SOFT &&
-            this.curlOverlay?.isReady() === true
-        );
-    }
-
-    /** False keeps the existing soft renderer visible as a safe fallback. */
-    protected drawRoundedCurl(): boolean {
-        if (!this.isRoundedCurlReady()) {
+    /** Select exactly one dynamic renderer for the current frame. */
+    protected drawCurl(): CurlRenderMode {
+        if (
+            this.curlFold === null ||
+            this.flippingPage === null ||
+            this.flippingPage.getDrawingDensity() !== PageDensity.SOFT
+        ) {
             this.curlOverlay?.hide();
-            return false;
+            return CurlRenderMode.LEGACY;
+        }
+
+        const overlayState = this.curlOverlay?.getState();
+        if (overlayState === CurlOverlayState.PREPARING) {
+            this.curlOverlay?.hide();
+            return CurlRenderMode.WAITING;
+        }
+
+        if (overlayState !== CurlOverlayState.READY) {
+            this.curlOverlay?.hide();
+            return CurlRenderMode.LEGACY;
         }
 
         const rect = this.getRect();
@@ -517,7 +528,9 @@ export abstract class Render {
             rect,
             this.setting.curlRadius ?? Math.round(rect.pageWidth * 0.32),
             this.setting.drawShadow ? this.setting.maxShadowOpacity : 0,
-        );
+        )
+            ? CurlRenderMode.ROUNDED
+            : CurlRenderMode.LEGACY;
     }
 
     /**

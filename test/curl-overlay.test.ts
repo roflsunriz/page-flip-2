@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test';
 
 import type { Page } from '../src/Page/Page';
-import { CurlOverlay } from '../src/Render/CurlOverlay';
+import { CurlOverlay, CurlOverlayState } from '../src/Render/CurlOverlay';
 
 afterEach(() => mock.restore());
 
@@ -16,6 +16,7 @@ describe('rounded curl fallback', () => {
         overlay.prepare({} as Page, null, 400, 600);
 
         expect(overlay.isReady()).toBe(false);
+        expect(overlay.getState()).toBe(CurlOverlayState.FALLBACK);
         expect(
             wrapper.querySelector<HTMLCanvasElement>('.page-flip-2__curl-canvas')?.style.display,
         ).toBe('none');

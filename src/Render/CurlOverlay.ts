@@ -18,13 +18,22 @@ const sameKey = (left: TextureKey | null, right: TextureKey): boolean =>
     left.width === right.width &&
     left.height === right.height;
 
+export const CurlOverlayState = {
+    IDLE: 'idle',
+    PREPARING: 'preparing',
+    READY: 'ready',
+    FALLBACK: 'fallback',
+} as const;
+
+export type CurlOverlayState = (typeof CurlOverlayState)[keyof typeof CurlOverlayState];
+
 /** Owns the single shared WebGL canvas used while a soft page is curling. */
 export class CurlOverlay {
     private readonly canvas: HTMLCanvasElement;
     private renderer: WebGLCurlRenderer = null;
     private textureKey: TextureKey = null;
     private generation = 0;
-    private ready = false;
+    private state: CurlOverlayState = CurlOverlayState.IDLE;
     private permanentlyUnavailable = false;
 
     constructor(
@@ -44,10 +53,16 @@ export class CurlOverlay {
     private onContextLost = (event: Event): void => {
         event.preventDefault();
         this.permanentlyUnavailable = true;
-        this.ready = false;
         this.hide();
-        this.onStateChange();
+        this.setState(CurlOverlayState.FALLBACK);
     };
+
+    private setState(state: CurlOverlayState): void {
+        if (this.state === state) return;
+
+        this.state = state;
+        this.onStateChange();
+    }
 
     private ensureRenderer(): boolean {
         if (this.renderer !== null) return true;
@@ -63,13 +78,22 @@ export class CurlOverlay {
     }
 
     public prepare(front: Page, back: Page | null, width: number, height: number): void {
-        if (this.permanentlyUnavailable || !this.ensureRenderer()) return;
+        if (this.permanentlyUnavailable || !this.ensureRenderer()) {
+            this.setState(CurlOverlayState.FALLBACK);
+            return;
+        }
 
         const key = { front, back, width, height };
-        if (sameKey(this.textureKey, key) && this.ready) return;
+        if (
+            sameKey(this.textureKey, key) &&
+            (this.state === CurlOverlayState.PREPARING ||
+                this.state === CurlOverlayState.READY ||
+                this.state === CurlOverlayState.FALLBACK)
+        )
+            return;
 
         this.textureKey = key;
-        this.ready = false;
+        this.setState(CurlOverlayState.PREPARING);
         const generation = ++this.generation;
         const frontSource = Promise.resolve(front.getTextureSource(width, height));
         const backSource =
@@ -79,25 +103,35 @@ export class CurlOverlay {
 
         void Promise.all([frontSource, backSource])
             .then(([resolvedFront, resolvedBack]) => {
-                if (generation !== this.generation || resolvedFront === null) return;
+                if (generation !== this.generation) return;
+                if (resolvedFront === null) {
+                    this.setState(CurlOverlayState.FALLBACK);
+                    return;
+                }
 
                 try {
                     this.renderer.setTextures(resolvedFront, resolvedBack);
-                    this.ready = true;
+                    this.setState(CurlOverlayState.READY);
                 } catch {
-                    this.ready = false;
+                    this.setState(CurlOverlayState.FALLBACK);
                 }
-                this.onStateChange();
             })
             .catch(() => {
                 if (generation !== this.generation) return;
-                this.ready = false;
-                this.onStateChange();
+                this.setState(CurlOverlayState.FALLBACK);
             });
     }
 
     public isReady(): boolean {
-        return this.ready && this.renderer !== null && !this.permanentlyUnavailable;
+        return (
+            this.state === CurlOverlayState.READY &&
+            this.renderer !== null &&
+            !this.permanentlyUnavailable
+        );
+    }
+
+    public getState(): CurlOverlayState {
+        return this.state;
     }
 
     public draw(
@@ -125,8 +159,8 @@ export class CurlOverlay {
             this.renderer.draw(fold, direction === FlipDirection.FORWARD, radius, shadowStrength);
             return true;
         } catch {
-            this.ready = false;
             this.hide();
+            this.setState(CurlOverlayState.FALLBACK);
             return false;
         }
     }
@@ -138,6 +172,12 @@ export class CurlOverlay {
     public reset(): void {
         this.generation += 1;
         this.hide();
+        if (this.permanentlyUnavailable) {
+            this.state = CurlOverlayState.FALLBACK;
+        } else if (this.state !== CurlOverlayState.READY) {
+            this.state = CurlOverlayState.IDLE;
+            this.textureKey = null;
+        }
     }
 
     public destroy(): void {
