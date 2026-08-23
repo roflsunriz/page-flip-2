@@ -1,9 +1,14 @@
 import { Orientation, Render } from '../Render/Render';
 import { PageFlip } from '../PageFlip';
-import { Helper } from '../Helper';
 import { PageRect, Point } from '../BasicTypes';
 import { FlipCalculation } from './FlipCalculation';
 import { Page, PageDensity } from '../Page/Page';
+import {
+    calculateReflectionCurl,
+    easeOutCubic,
+    getProgrammaticTargetY,
+    ReflectionCurlFold,
+} from './ReflectionCurl';
 
 /**
  * Flipping direction
@@ -49,6 +54,8 @@ export class Flip {
     private bottomPage: Page = null;
 
     private calc: FlipCalculation = null;
+    private curlAnchor: Point = null;
+    private curlFold: ReflectionCurlFold = null;
 
     private state: FlippingState = FlippingState.READ;
 
@@ -62,11 +69,11 @@ export class Flip {
      *
      * @param globalPos - Touch Point Coordinates (relative window)
      */
-    public fold(globalPos: Point): void {
+    public fold(globalPos: Point, startGlobalPos?: Point): void {
         this.setState(FlippingState.USER_FOLD);
 
         // If the process has not started yet
-        if (this.calc === null) this.start(globalPos);
+        if (this.calc === null) this.start(startGlobalPos ?? globalPos);
 
         this.do(this.render.convertToPage(globalPos));
     }
@@ -95,17 +102,15 @@ export class Flip {
         const yStart =
             this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height - topMargins : topMargins;
 
-        const yDest = this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height : 0;
-
         // Сalculations for these points
         this.calc.calc({ x: rect.pageWidth - topMargins, y: yStart });
+        this.curlAnchor = {
+            x: rect.pageWidth,
+            y: this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height : 0,
+        };
 
         // Run flipping animation
-        this.animateFlippingTo(
-            { x: rect.pageWidth - topMargins, y: yStart },
-            { x: -rect.pageWidth, y: yDest },
-            true,
-        );
+        this.animateProgrammaticTurn({ x: rect.pageWidth - topMargins, y: yStart });
     }
 
     /**
@@ -142,6 +147,11 @@ export class Flip {
             }
 
             this.render.setDirection(direction);
+            const pageStart = this.render.convertToPage(globalPos, direction);
+            this.curlAnchor = {
+                x: rect.pageWidth,
+                y: Math.max(0, Math.min(rect.height, pageStart.y)),
+            };
             this.calc = new FlipCalculation(
                 direction,
                 flipCorner,
@@ -163,37 +173,44 @@ export class Flip {
     private do(pagePos: Point): void {
         if (this.calc === null) return; // Flipping process not started
 
-        if (this.calc.calc(pagePos)) {
-            // Perform calculations for a specific position
-            const progress = this.calc.getFlippingProgress();
+        const rect = this.getBoundsRect();
+        this.curlFold =
+            this.curlAnchor === null
+                ? null
+                : calculateReflectionCurl(this.curlAnchor, pagePos, rect.pageWidth, rect.height);
+        this.render.setCurlData(this.curlFold);
 
-            this.bottomPage.setArea(this.calc.getBottomClipArea());
-            this.bottomPage.setPosition(this.calc.getBottomPagePosition());
-            this.bottomPage.setAngle(0);
-            this.bottomPage.setHardAngle(0);
+        if (!this.calc.calc(pagePos)) return;
 
-            this.flippingPage.setArea(this.calc.getFlippingClipArea());
-            this.flippingPage.setPosition(this.calc.getActiveCorner());
-            this.flippingPage.setAngle(this.calc.getAngle());
+        // Keep the legacy polygon state current for hard pages and fallback rendering.
+        const progress = this.calc.getFlippingProgress();
 
-            if (this.calc.getDirection() === FlipDirection.FORWARD) {
-                this.flippingPage.setHardAngle((90 * (200 - progress * 2)) / 100);
-            } else {
-                this.flippingPage.setHardAngle((-90 * (200 - progress * 2)) / 100);
-            }
+        this.bottomPage.setArea(this.calc.getBottomClipArea());
+        this.bottomPage.setPosition(this.calc.getBottomPagePosition());
+        this.bottomPage.setAngle(0);
+        this.bottomPage.setHardAngle(0);
 
-            this.render.setPageRect(this.calc.getRect());
+        this.flippingPage.setArea(this.calc.getFlippingClipArea());
+        this.flippingPage.setPosition(this.calc.getActiveCorner());
+        this.flippingPage.setAngle(this.calc.getAngle());
 
-            this.render.setBottomPage(this.bottomPage);
-            this.render.setFlippingPage(this.flippingPage);
-
-            this.render.setShadowData(
-                this.calc.getShadowStartPoint(),
-                this.calc.getShadowAngle(),
-                progress,
-                this.calc.getDirection(),
-            );
+        if (this.calc.getDirection() === FlipDirection.FORWARD) {
+            this.flippingPage.setHardAngle((90 * (200 - progress * 2)) / 100);
+        } else {
+            this.flippingPage.setHardAngle((-90 * (200 - progress * 2)) / 100);
         }
+
+        this.render.setPageRect(this.calc.getRect());
+
+        this.render.setBottomPage(this.bottomPage);
+        this.render.setFlippingPage(this.flippingPage);
+
+        this.render.setShadowData(
+            this.calc.getShadowStartPoint(),
+            this.calc.getShadowAngle(),
+            progress,
+            this.calc.getDirection(),
+        );
     }
 
     /**
@@ -255,10 +272,18 @@ export class Flip {
         const pos = this.calc.getPosition();
         const rect = this.getBoundsRect();
 
-        const y = this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height : 0;
+        const y =
+            this.curlAnchor?.y ?? (this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height : 0);
+        const complete =
+            this.curlFold !== null
+                ? this.curlFold.progress >= this.app.getSettings().flipThreshold
+                : pos.x <= 0;
 
-        if (pos.x <= 0) this.animateFlippingTo(pos, { x: -rect.pageWidth, y }, true);
-        else this.animateFlippingTo(pos, { x: rect.pageWidth, y }, false);
+        this.animateFlippingTo(
+            pos,
+            { x: complete ? -rect.pageWidth : rect.pageWidth, y },
+            complete,
+        );
     }
 
     /**
@@ -320,13 +345,18 @@ export class Flip {
         isTurned: boolean,
         needReset = true,
     ): void {
-        const points = Helper.GetCordsFromTwoPoint(start, dest);
+        const distance = Math.max(Math.abs(start.x - dest.x), Math.abs(start.y - dest.y));
+        const frameCount = 120;
+        const frames = Array.from({ length: frameCount + 1 }, (_, index) => {
+            const eased = easeOutCubic(index / frameCount);
+            const point = {
+                x: start.x + (dest.x - start.x) * eased,
+                y: start.y + (dest.y - start.y) * eased,
+            };
+            return () => this.do(point);
+        });
 
-        // Create frames
-        const frames = [];
-        for (const p of points) frames.push(() => this.do(p));
-
-        const duration = this.getAnimationDuration(points.length);
+        const duration = this.getAnimationDuration(distance);
 
         this.render.startAnimation(frames, duration, () => {
             // callback function
@@ -346,6 +376,33 @@ export class Flip {
                 this.setState(FlippingState.READ);
                 this.reset();
             }
+        });
+    }
+
+    private animateProgrammaticTurn(start: Point): void {
+        const rect = this.getBoundsRect();
+        const frameCount = 120;
+        const anchorY = this.curlAnchor.y;
+        const frames = Array.from({ length: frameCount + 1 }, (_, index) => {
+            const eased = easeOutCubic(index / frameCount);
+            const point = {
+                x: start.x + (-rect.pageWidth - start.x) * eased,
+                y: getProgrammaticTargetY(anchorY, eased, rect.height),
+            };
+            return () => this.do(point);
+        });
+
+        this.render.startAnimation(frames, this.app.getSettings().flippingTime, () => {
+            if (!this.calc) return;
+
+            if (this.app.isNextPageDirection(this.calc.getDirection())) this.app.turnToNextPage();
+            else this.app.turnToPrevPage();
+
+            this.render.setBottomPage(null);
+            this.render.setFlippingPage(null);
+            this.render.clearShadow();
+            this.setState(FlippingState.READ);
+            this.reset();
         });
     }
 
@@ -416,8 +473,11 @@ export class Flip {
         }
 
         this.calc = null;
+        this.curlAnchor = null;
+        this.curlFold = null;
         this.flippingPage = null;
         this.bottomPage = null;
+        this.render.clearCurl();
     }
 
     private getBoundsRect(): PageRect {

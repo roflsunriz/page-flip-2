@@ -34,6 +34,8 @@ export const enum PageDensity {
     HARD = 'hard',
 }
 
+export type PageTextureSource = TexImageSource | Promise<TexImageSource | null> | null;
+
 /**
  * Class representing a book page
  */
@@ -87,6 +89,9 @@ export abstract class Page {
 
     /** Release resources owned by the page. */
     public abstract destroy(): void;
+
+    /** Source used by the rounded WebGL page-curl renderer. */
+    public abstract getTextureSource(width: number, height: number): PageTextureSource;
 
     /**
      * Set a constant page density

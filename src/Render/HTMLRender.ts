@@ -312,8 +312,17 @@ export class HTMLRender extends Render {
     /**
      * Draw the next page at the time of flipping
      */
-    private drawBottomPage(): void {
+    private drawBottomPage(roundedCurl: boolean): void {
         if (this.bottomPage === null) return;
+
+        if (roundedCurl) {
+            this.bottomPage.simpleDraw(
+                this.direction === FlipDirection.BACK
+                    ? PageOrientation.LEFT
+                    : PageOrientation.RIGHT,
+            );
+            return;
+        }
 
         const tempDensity =
             this.flippingPage != null ? this.flippingPage.getDrawingDensity() : null;
@@ -332,14 +341,15 @@ export class HTMLRender extends Render {
 
     protected drawFrame(): void {
         this.clear();
+        const roundedCurl = this.drawRoundedCurl();
 
         this.drawLeftPage();
 
         this.drawRightPage();
 
-        this.drawBottomPage();
+        this.drawBottomPage(roundedCurl);
 
-        if (this.flippingPage != null) {
+        if (!roundedCurl && this.flippingPage != null) {
             (this.flippingPage as HTMLPage).getElement().style.zIndex = (
                 this.getSettings().startZIndex + 5
             ).toString(10);
@@ -347,7 +357,7 @@ export class HTMLRender extends Render {
             this.flippingPage.draw();
         }
 
-        if (this.shadow != null && this.flippingPage !== null) {
+        if (!roundedCurl && this.shadow != null && this.flippingPage !== null) {
             if (this.flippingPage.getDrawingDensity() === PageDensity.SOFT) {
                 this.drawOuterShadow();
                 this.drawInnerShadow();

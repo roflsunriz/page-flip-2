@@ -29,6 +29,7 @@ try {
     });
     await cp(join(projectRoot, 'LICENSE'), join(stage, 'LICENSE'));
     await cp(join(projectRoot, 'README.md'), join(stage, 'README.md'));
+    await cp(join(projectRoot, 'THIRD_PARTY_NOTICES.md'), join(stage, 'THIRD_PARTY_NOTICES.md'));
 
     const args = ['bun', 'pm', 'pack'];
     if (dryRun) args.push('--dry-run');

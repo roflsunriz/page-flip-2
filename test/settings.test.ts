@@ -29,6 +29,17 @@ describe('Settings', () => {
         ).toThrow('Invalid flipping time');
     });
 
+    it('validates rounded curl controls', () => {
+        const settings = new Settings();
+        expect(() => settings.getSettings({ width: 100, height: 100, curlRadius: 0 })).toThrow();
+        expect(() =>
+            settings.getSettings({ width: 100, height: 100, flipThreshold: 101 }),
+        ).toThrow();
+        expect(settings.getSettings({ width: 100, height: 100, curlRadius: 32 }).curlRadius).toBe(
+            32,
+        );
+    });
+
     it('fills safe minimum and maximum bounds for stretch mode', () => {
         const settings = new Settings().getSettings({
             size: SizeType.STRETCH,

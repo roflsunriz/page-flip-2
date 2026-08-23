@@ -215,7 +215,7 @@ const assertions = [
     [desktop.books.ltr.currentPage === 0, 'LTR must start at logical page 0'],
     [desktop.books.rtl.currentPage === 0, 'RTL must start at logical page 0'],
     [desktop.canvas.currentPage === 0, 'Canvas RTL must start at logical page 0'],
-    [desktop.canvas.canvasCount === 1, 'Canvas mode must create one canvas'],
+    [desktop.canvas.canvasCount === 2, 'Canvas mode must create the page and shared curl canvases'],
     [desktop.books.ltr.pageClasses[0].includes('--left'), 'LTR page 0 must be on the left'],
     [desktop.books.rtl.pageClasses[0].includes('--right'), 'RTL page 0 must be on the right'],
     [

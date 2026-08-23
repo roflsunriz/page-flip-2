@@ -1,8 +1,10 @@
 import { PageFlip } from '../PageFlip';
 import { Point, PageRect, RectPoints } from '../BasicTypes';
 import { FlipDirection } from '../Flip/Flip';
-import { Page, PageOrientation } from '../Page/Page';
+import { Page, PageDensity, PageOrientation } from '../Page/Page';
 import { DisplayMode, FlipSetting, SizeType } from '../Settings';
+import { ReflectionCurlFold } from '../Flip/ReflectionCurl';
+import { CurlOverlay } from './CurlOverlay';
 
 type FrameAction = () => void;
 type AnimationSuccessAction = () => void;
@@ -77,10 +79,13 @@ export abstract class Render {
     protected animation: AnimationProcess = null;
     /** Page borders while flipping */
     protected pageRect: RectPoints = null;
+    /** Reflection crease consumed by the rounded page mesh. */
+    protected curlFold: ReflectionCurlFold = null;
     /** Current book area */
     private boundsRect: PageRect = null;
     private animationFrameId: number = null;
     private isRunning = false;
+    private curlOverlay: CurlOverlay = null;
 
     /** Timer started from start of rendering */
     protected timer = 0;
@@ -149,6 +154,12 @@ export abstract class Render {
     public start(): void {
         if (this.isRunning) return;
 
+        const wrapper = this.app.getUI().getWrapper?.();
+        if (wrapper instanceof HTMLElement) {
+            this.curlOverlay = new CurlOverlay(wrapper, this.setting.startZIndex, () =>
+                this.requestRender(),
+            );
+        }
         this.isRunning = true;
         this.update();
         this.requestRender();
@@ -168,6 +179,9 @@ export abstract class Render {
         this.animationFrameId = null;
         this.animation = null;
         this.shadow = null;
+        this.curlFold = null;
+        this.curlOverlay?.destroy();
+        this.curlOverlay = null;
     }
 
     /**
@@ -447,7 +461,63 @@ export abstract class Render {
         }
 
         this.flippingPage = page;
+
+        if (
+            page !== null &&
+            page.getDrawingDensity() === PageDensity.SOFT &&
+            this.curlFold !== null
+        ) {
+            const frontPage =
+                this.direction === FlipDirection.FORWARD ? this.rightPage : this.leftPage;
+            if (frontPage !== null) {
+                const rect = this.getRect();
+                const backPage = this.orientation === Orientation.PORTRAIT ? this.bottomPage : page;
+                this.curlOverlay?.prepare(frontPage, backPage, rect.pageWidth, rect.height);
+            }
+        } else if (page === null) {
+            this.clearCurl();
+        }
+
         this.requestRender();
+    }
+
+    public setCurlData(fold: ReflectionCurlFold | null): void {
+        this.curlFold = fold;
+        if (fold === null) this.curlOverlay?.hide();
+        this.requestRender();
+    }
+
+    public clearCurl(): void {
+        this.curlFold = null;
+        this.curlOverlay?.reset();
+        this.requestRender();
+    }
+
+    /** True when both page textures are ready to replace the legacy soft drawing. */
+    protected isRoundedCurlReady(): boolean {
+        return (
+            this.curlFold !== null &&
+            this.flippingPage !== null &&
+            this.flippingPage.getDrawingDensity() === PageDensity.SOFT &&
+            this.curlOverlay?.isReady() === true
+        );
+    }
+
+    /** False keeps the existing soft renderer visible as a safe fallback. */
+    protected drawRoundedCurl(): boolean {
+        if (!this.isRoundedCurlReady()) {
+            this.curlOverlay?.hide();
+            return false;
+        }
+
+        const rect = this.getRect();
+        return this.curlOverlay.draw(
+            this.curlFold,
+            this.direction,
+            rect,
+            this.setting.curlRadius ?? Math.round(rect.pageWidth * 0.32),
+            this.setting.drawShadow ? this.setting.maxShadowOpacity : 0,
+        );
     }
 
     /**

@@ -1,0 +1,61 @@
+import { describe, expect, it } from 'bun:test';
+
+import {
+    calculateReflectionCurl,
+    clampCurlTarget,
+    getProgrammaticTargetY,
+} from '../src/Flip/ReflectionCurl';
+
+const width = 400;
+const height = 600;
+
+describe('rounded curl geometry', () => {
+    it('does not create a fold before the pointer leaves the free edge', () => {
+        expect(
+            calculateReflectionCurl(
+                { x: width, y: height / 2 },
+                { x: width, y: height / 2 },
+                width,
+                height,
+            ),
+        ).toBeNull();
+    });
+
+    it('maps the spine and opposite edge to half and complete progress', () => {
+        const anchor = { x: width, y: height / 2 };
+        const halfway = calculateReflectionCurl(anchor, { x: 0, y: anchor.y }, width, height);
+        const complete = calculateReflectionCurl(anchor, { x: -width, y: anchor.y }, width, height);
+
+        expect(halfway?.progress).toBeCloseTo(50, 6);
+        expect(complete?.progress).toBeCloseTo(100, 6);
+    });
+
+    it('produces a vertical crease for a horizontal middle-edge drag', () => {
+        const fold = calculateReflectionCurl(
+            { x: width, y: height / 2 },
+            { x: width * 0.4, y: height / 2 },
+            width,
+            height,
+        );
+
+        expect(Math.abs(fold?.creaseDirection.x ?? 1)).toBeLessThan(1e-8);
+        expect(fold?.creaseDirection.y).toBeCloseTo(-1, 8);
+    });
+
+    it('keeps an extreme drag within reach of both spine corners', () => {
+        const anchor = { x: width, y: 0 };
+        const target = clampCurlTarget(anchor, { x: -3000, y: -3000 }, height);
+
+        expect(Math.hypot(target.x, target.y)).toBeLessThanOrEqual(width + 0.5);
+        expect(Math.hypot(target.x, target.y - height)).toBeLessThanOrEqual(
+            Math.hypot(width, height) + 0.5,
+        );
+    });
+
+    it('arcs scripted top and bottom turns through the page centre', () => {
+        expect(getProgrammaticTargetY(0, 0.5, height)).toBeCloseTo(height / 2, 8);
+        expect(getProgrammaticTargetY(height, 0.5, height)).toBeCloseTo(height / 2, 8);
+        expect(getProgrammaticTargetY(0, 0, height)).toBe(0);
+        expect(getProgrammaticTargetY(height, 1, height)).toBeCloseTo(height, 8);
+    });
+});

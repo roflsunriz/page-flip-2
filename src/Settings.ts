@@ -57,6 +57,10 @@ export interface FlipSetting {
     backgroundColor: string;
     /** Flipping animation time */
     flippingTime: number;
+    /** Maximum rounded curl radius in pixels; null uses 32% of the page width. */
+    curlRadius: number | null;
+    /** Progress percentage at which releasing a drag completes the turn. */
+    flipThreshold: number;
 
     /** Enable switching to portrait mode */
     usePortrait: boolean;
@@ -105,6 +109,8 @@ export class Settings {
         drawShadow: true,
         backgroundColor: '#ffffff',
         flippingTime: 1000,
+        curlRadius: null,
+        flipThreshold: 50,
         usePortrait: true,
         displayMode: DisplayMode.AUTO,
         startZIndex: 0,
@@ -158,6 +164,12 @@ export class Settings {
         if (result.width <= 0 || result.height <= 0) throw new Error('Invalid width or height');
 
         if (result.flippingTime <= 0) throw new Error('Invalid flipping time');
+
+        if (result.curlRadius !== null && result.curlRadius <= 0)
+            throw new Error('Invalid curl radius');
+
+        if (result.flipThreshold < 0 || result.flipThreshold > 100)
+            throw new Error('Invalid flip threshold');
 
         if (result.backgroundColor.trim() === '') throw new Error('Invalid background color');
 

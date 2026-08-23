@@ -166,6 +166,59 @@ export class HTMLPage extends Page {
         this.hideTemporaryCopy();
     }
 
+    public async getTextureSource(width: number, height: number): Promise<TexImageSource | null> {
+        const parent = this.element.parentElement;
+        if (parent === null) return null;
+
+        const clone = this.element.cloneNode(true) as HTMLElement;
+        clone.classList.remove(
+            'page-flip-2__item',
+            '--simple',
+            '--left',
+            '--right',
+            '--soft',
+            '--hard',
+        );
+        clone.setAttribute('aria-hidden', 'true');
+        clone.style.cssText = `
+            position: absolute;
+            display: block;
+            left: -100000px;
+            top: 0;
+            width: ${width}px;
+            height: ${height}px;
+            overflow: hidden;
+            transform: none;
+            clip-path: none;
+            pointer-events: none;
+        `;
+        parent.appendChild(clone);
+
+        try {
+            const { snapdom } = await import('@zumer/snapdom');
+            const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+            const image = await snapdom.toPng(clone, {
+                dpr: pixelRatio,
+                width,
+                height,
+                embedFonts: false,
+                backgroundColor: getComputedStyle(this.element).backgroundColor || '#ffffff',
+            });
+
+            if (!image.complete) {
+                await new Promise<void>((resolve, reject) => {
+                    image.onload = () => resolve();
+                    image.onerror = () => reject(new Error('Page snapshot failed to load'));
+                });
+            }
+            return image;
+        } catch {
+            return null;
+        } finally {
+            clone.remove();
+        }
+    }
+
     public setOrientation(orientation: PageOrientation): void {
         super.setOrientation(orientation);
         this.element.classList.remove('--left', '--right');

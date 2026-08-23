@@ -6,7 +6,9 @@
 
 ## 状態
 
-LTR/RTL、HTML/Canvas、横長・縦長、親要素のリサイズ、更新・破棄を自動テストと実ブラウザで確認しています。
+柔らかいページは、指で掴んだ自由端と現在座標から折れ線を算出し、表裏テクスチャを貼ったWebGL2メッシュを円柱状に変形して描画します。LTR/RTL、HTML/Canvas、横長・縦長、ドラッグのキャンセル・完了、親要素のリサイズ、更新・破棄を自動テストと実ブラウザで確認しています。
+
+WebGL2が無効な環境、HTMLページのテクスチャ化に失敗した場合、またはWebGLコンテキストを失った場合は、操作を失わないよう従来のポリゴン描画へ自動的にフォールバックします。hardページは従来どおり剛体の3D回転を使用します。
 
 ## 必要環境
 
@@ -61,6 +63,10 @@ pageFlip.loadFromHTML(document.querySelectorAll<HTMLElement>('[data-page-flip-2-
 
 `showCover: true` で表紙を単独表示しつつ雑誌のように柔らかくめくる場合は、`coverDensity: 'soft'` を指定します。既定値は従来互換の `'hard'` です。
 
+3Dカールの最大半径は `curlRadius` でピクセル指定できます。省略時はページ幅の32%です。小さい値ほど折れが強くなります。ドラッグを離したときにページを確定する進捗は `flipThreshold` で0〜100の範囲から指定でき、既定値は50です。
+
+HTMLページは3D描画中だけ静止画像へ変換するため、別chunkへ同梱した `@zumer/snapdom` を遅延読み込みします。通常表示中のDOMとイベントハンドラーはそのまま維持されます。Canvas画像ページは読み込み済み画像を直接WebGLテクスチャへ渡します。
+
 Canvas画像モードの余白色は `backgroundColor` で指定できます。`drawShadow: false` はめくり中の影に加えて中央の綴じ影も無効にします。
 
 表示を常に片面または見開きへ固定する場合は `displayMode: 'portrait' | 'landscape'` を使います。既定の `'auto'` では `usePortrait` と表示幅から自動選択します。
@@ -85,4 +91,4 @@ pageFlip
 
 ## ライセンスと由来
 
-MIT Licenseです。原著作者の著作権表示とライセンス全文は [LICENSE](./LICENSE) に保持しています。
+MIT Licenseです。原著作者の著作権表示とライセンス全文は [LICENSE](./LICENSE)、3Dカールの設計参考元と実行時依存の表示は [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) に保持しています。

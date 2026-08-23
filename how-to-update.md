@@ -18,6 +18,8 @@ bun install
 
 4. lockfileの差分を確認し、意図しない依存追加がないことを確認する。
 
+`@zumer/snapdom` を更新する場合は、HTMLページの背景、画像、疑似要素、Shadow DOM内のページがテクスチャ化できることと、失敗時に従来描画へ切り替わることを実ブラウザで確認する。
+
 ## ソース更新後の検証
 
 ```powershell
@@ -38,9 +40,9 @@ bun pm pack --dry-run
 bun run release:check
 ```
 
-`bun pm pack` は `prepack` 経由でBunビルドを再実行する。dry-runのファイル一覧に `dist/page-flip-2.js`、`dist/index.d.ts`、`LICENSE`、`README.md` が含まれることを確認する。
+`bun pm pack` は `prepack` 経由でBunビルドを再実行する。dry-runのファイル一覧に `dist/page-flip-2.js`、`dist/index.d.ts`、`LICENSE`、`README.md`、`THIRD_PARTY_NOTICES.md` が含まれることを確認する。
 
-ブラウザ挙動を変更した場合は、HTMLページと画像ページの両モードについてLTR/RTL、横長・縦長、リサイズ、連続操作、更新、破棄を実ブラウザで確認する。
+ブラウザ挙動を変更した場合は、HTMLページと画像ページの両モードについてLTR/RTL、横長・縦長、リサイズ、ドラッグのキャンセル・完了、WebGLフォールバック、連続操作、更新、破棄を実ブラウザで確認する。3Dカールは `bun run scripts/curl-browser-check.mjs <demo-url> <screenshot-directory> <cdp-url>` で確認できる。
 
 ## 上流Issue / PRの再監査
 

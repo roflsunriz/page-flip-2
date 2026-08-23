@@ -1,4 +1,4 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, readdir, rm } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
 const projectRoot = resolve(import.meta.dirname, '..');
@@ -29,7 +29,12 @@ const buildBundle = async () => {
         format: 'esm',
         minify: true,
         sourcemap: 'linked',
-        naming: 'page-flip-2.[ext]',
+        splitting: true,
+        naming: {
+            entry: 'page-flip-2.[ext]',
+            chunk: 'chunks/[name]-[hash].[ext]',
+            asset: 'assets/[name]-[hash].[ext]',
+        },
     });
 
     if (!result.success) {
@@ -49,12 +54,31 @@ const validateBundle = async () => {
     }
 
     const source = await bundle.text();
-    const requiredMarkers = ['PageFlip', 'data-page-flip-2-styles', 'page-flip-2__wrapper'];
+    const requiredMarkers = [
+        'PageFlip',
+        'data-page-flip-2-styles',
+        'page-flip-2__wrapper',
+        'page-flip-2__curl-canvas',
+    ];
 
     for (const marker of requiredMarkers) {
         if (!source.includes(marker)) {
             throw new Error(`Bun bundle is missing required marker: ${marker}`);
         }
+    }
+
+    const chunkDirectory = resolve(distDirectory, 'chunks');
+    const chunkFiles = await readdir(chunkDirectory);
+    const snapdomChunk = await Promise.all(
+        chunkFiles
+            .filter((file) => file.endsWith('.js'))
+            .map(async (file) => ({
+                file,
+                source: await Bun.file(resolve(chunkDirectory, file)).text(),
+            })),
+    );
+    if (!snapdomChunk.some(({ source }) => source.includes('snapdom'))) {
+        throw new Error('Bun bundle is missing the lazy snapdom chunk');
     }
 };
 

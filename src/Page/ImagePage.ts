@@ -149,6 +149,10 @@ export class ImagePage extends Page {
         this.loadState = ImageLoadState.IDLE;
     }
 
+    public getTextureSource(): TexImageSource | null {
+        return this.loadState === ImageLoadState.LOADED ? this.image : null;
+    }
+
     public newTemporaryCopy(): Page {
         return this;
     }

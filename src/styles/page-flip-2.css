@@ -22,6 +22,11 @@
     height: 100%;
 }
 
+.page-flip-2__curl-canvas {
+    display: none;
+    pointer-events: none;
+}
+
 .page-flip-2__block {
     position: absolute;
     inset: 0;

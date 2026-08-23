@@ -423,7 +423,7 @@ export class PageFlip extends EventObject {
         } else if (this.isUserTouch) {
             if (Helper.GetDistanceBetweenTwoPoint(this.mousePosition, pos) > 5) {
                 this.isUserMove = true;
-                this.flipController.fold(pos);
+                this.flipController.fold(pos, this.mousePosition);
             }
         }
     }

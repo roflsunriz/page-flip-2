@@ -27,6 +27,7 @@ export class CanvasRender extends Render {
     }
 
     protected drawFrame(): void {
+        const roundedCurl = this.drawRoundedCurl();
         this.clear();
         this.ctx.save();
 
@@ -47,13 +48,23 @@ export class CanvasRender extends Render {
 
         if (this.rightPage != null) this.rightPage.simpleDraw(PageOrientation.RIGHT);
 
-        if (this.bottomPage != null) this.bottomPage.draw();
+        if (this.bottomPage != null) {
+            if (roundedCurl) {
+                this.bottomPage.simpleDraw(
+                    this.direction === FlipDirection.BACK
+                        ? PageOrientation.LEFT
+                        : PageOrientation.RIGHT,
+                );
+            } else {
+                this.bottomPage.draw();
+            }
+        }
 
         if (this.getSettings().drawShadow) this.drawBookShadow();
 
-        if (this.flippingPage != null) this.flippingPage.draw();
+        if (!roundedCurl && this.flippingPage != null) this.flippingPage.draw();
 
-        if (this.shadow != null) {
+        if (!roundedCurl && this.shadow != null) {
             this.drawOuterShadow();
             this.drawInnerShadow();
         }
