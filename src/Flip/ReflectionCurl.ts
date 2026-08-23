@@ -32,7 +32,12 @@ export const calculateCurlAnchorY = (
 
     const spineZone = pageWidth * 0.35;
     const spineInfluence = 1 - clampUnit(Math.max(0, start.x) / spineZone);
-    const verticalInfluence = clampUnit(Math.abs(y - halfHeight) / halfHeight);
+    // Keep only a narrow band around the vertical centre as a straight roll.
+    // Outside it, a spine-side grab must unambiguously select the matching corner.
+    const centerTransition = pageHeight * 0.08;
+    const verticalInfluence = clampUnit(
+        centerTransition === 0 ? 0 : Math.abs(y - halfHeight) / centerTransition,
+    );
     const corner = y < halfHeight ? 0 : pageHeight;
     const influence = spineInfluence * verticalInfluence;
 

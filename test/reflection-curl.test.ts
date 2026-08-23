@@ -106,6 +106,11 @@ describe('rounded curl geometry', () => {
         expect(lowerAnchor).toBeGreaterThan(lowerStart.y);
         expect(upperAnchor + lowerAnchor).toBeCloseTo(height, 8);
         expect(calculateCurlAnchorY({ x: 0, y: height / 2 }, width, height)).toBe(height / 2);
+        expect(calculateCurlAnchorY({ x: 0, y: height * 0.4 }, width, height)).toBe(0);
+        expect(calculateCurlAnchorY({ x: 0, y: height * 0.6 }, width, height)).toBe(height);
+        expect(calculateCurlAnchorY({ x: width / 2, y: height * 0.4 }, width, height)).toBe(
+            height * 0.4,
+        );
         expect(calculateCurlAnchorY({ x: width, y: height * 0.15 }, width, height)).toBe(
             height * 0.15,
         );
