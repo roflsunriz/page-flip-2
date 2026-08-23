@@ -9,7 +9,6 @@ import {
     easeOutCubic,
     getProgrammaticTargetY,
     ReflectionCurlFold,
-    shouldTrackCurlAnchorY,
 } from './ReflectionCurl';
 
 /**
@@ -57,7 +56,6 @@ export class Flip {
 
     private calc: FlipCalculation = null;
     private curlAnchor: Point = null;
-    private curlAnchorStartX = 0;
     private curlAnchorTracksPointer = false;
     private curlFold: ReflectionCurlFold = null;
 
@@ -77,7 +75,7 @@ export class Flip {
         this.setState(FlippingState.USER_FOLD);
 
         // If the process has not started yet
-        if (this.calc === null) this.start(startGlobalPos ?? globalPos);
+        if (this.calc === null) this.start(startGlobalPos ?? globalPos, true);
 
         this.do(this.render.convertToPage(globalPos));
     }
@@ -124,7 +122,7 @@ export class Flip {
      *
      * @returns {boolean} True if flipping is possible, false otherwise
      */
-    public start(globalPos: Point): boolean {
+    public start(globalPos: Point, trackPointerY = false): boolean {
         this.reset();
 
         const bookPos = this.render.convertToBook(globalPos);
@@ -152,8 +150,7 @@ export class Flip {
 
             this.render.setDirection(direction);
             const pageStart = this.render.convertToPage(globalPos, direction);
-            this.curlAnchorTracksPointer = shouldTrackCurlAnchorY(pageStart.x, rect.pageWidth);
-            this.curlAnchorStartX = pageStart.x;
+            this.curlAnchorTracksPointer = trackPointerY;
             this.curlAnchor = {
                 x: rect.pageWidth,
                 y: calculateCurlAnchorY(pageStart, rect.pageWidth, rect.height),
@@ -182,7 +179,7 @@ export class Flip {
         const rect = this.getBoundsRect();
         if (this.curlAnchor !== null && this.curlAnchorTracksPointer) {
             this.curlAnchor.y = calculateCurlAnchorY(
-                { x: this.curlAnchorStartX, y: pagePos.y },
+                { x: 0, y: pagePos.y },
                 rect.pageWidth,
                 rect.height,
             );
@@ -487,7 +484,6 @@ export class Flip {
 
         this.calc = null;
         this.curlAnchor = null;
-        this.curlAnchorStartX = 0;
         this.curlAnchorTracksPointer = false;
         this.curlFold = null;
         this.flippingPage = null;

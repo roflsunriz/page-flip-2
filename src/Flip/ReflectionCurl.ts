@@ -16,10 +16,6 @@ const REST_EPSILON = 2;
 
 const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
 
-/** Interior/spine gestures use a virtual grab point that follows the pointer Y. */
-export const shouldTrackCurlAnchorY = (startX: number, pageWidth: number): boolean =>
-    pageWidth > 0 && startX < pageWidth * 0.85;
-
 /**
  * Resolve the virtual free-edge grab height from an arbitrary press position.
  * A press near the spine is biased toward the matching top/bottom corner,

@@ -185,6 +185,45 @@ const dragFromSpine = async (key, edge, verticalRatio, targetVerticalRatio = ver
     return points.target;
 };
 
+const dragFromFreeEdge = async (key, edge, verticalRatio, targetVerticalRatio) => {
+    const points = await evaluate(`(() => {
+        const root = document.querySelector('[data-book="${key}"]');
+        root.scrollIntoView({ block: 'center' });
+        const surface = root.querySelector('.page-flip-2__block');
+        const surfaceRect = surface.getBoundingClientRect();
+        const rect = window.demoBooks[${JSON.stringify(key)}].getRender().getRect();
+        const fromRight = ${JSON.stringify(edge)} === 'right';
+        const freeEdgeX = surfaceRect.left + rect.left + (fromRight ? rect.width : 0);
+        return {
+            start: {
+                x: freeEdgeX + (fromRight ? -2 : 2),
+                y: surfaceRect.top + rect.top + rect.height * ${verticalRatio},
+            },
+            target: {
+                x: freeEdgeX + (fromRight ? -3 : 3),
+                y: surfaceRect.top + rect.top + rect.height * ${targetVerticalRatio},
+            },
+        };
+    })()`);
+    await Bun.sleep(100);
+    await command('Input.dispatchMouseEvent', {
+        type: 'mousePressed',
+        x: points.start.x,
+        y: points.start.y,
+        button: 'left',
+        buttons: 1,
+        clickCount: 1,
+    });
+    await command('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: points.target.x,
+        y: points.target.y,
+        button: 'left',
+        buttons: 1,
+    });
+    return points.target;
+};
+
 const addPointerMarker = (point) =>
     evaluate(`(() => {
         document.querySelector('[data-curl-pointer-marker]')?.remove();
@@ -303,6 +342,56 @@ for (const diagnostic of [
     await addPointerMarker(target);
     await screenshot(`curl-${diagnostic.name}.png`);
     spineDragStates[diagnostic.name] = await evaluate(`({
+        state: window.demoBooks[${JSON.stringify(diagnostic.key)}].getState(),
+        canvasDisplay: document.querySelector('[data-book="${diagnostic.key}"] .page-flip-2__curl-canvas').style.display,
+    })`);
+    await release(target);
+    await waitFor(`window.demoBooks[${JSON.stringify(diagnostic.key)}].getState() === 'read'`);
+}
+
+const freeEdgeCrossStates = {};
+for (const diagnostic of [
+    {
+        name: 'ltr-free-bottom-to-top',
+        key: 'ltr',
+        edge: 'right',
+        verticalRatio: 0.95,
+        targetVerticalRatio: 0.05,
+    },
+    {
+        name: 'ltr-free-top-to-bottom',
+        key: 'ltr',
+        edge: 'right',
+        verticalRatio: 0.05,
+        targetVerticalRatio: 0.95,
+    },
+    {
+        name: 'rtl-free-bottom-to-top',
+        key: 'rtl',
+        edge: 'left',
+        verticalRatio: 0.95,
+        targetVerticalRatio: 0.05,
+    },
+    {
+        name: 'rtl-free-top-to-bottom',
+        key: 'rtl',
+        edge: 'left',
+        verticalRatio: 0.05,
+        targetVerticalRatio: 0.95,
+    },
+]) {
+    const target = await dragFromFreeEdge(
+        diagnostic.key,
+        diagnostic.edge,
+        diagnostic.verticalRatio,
+        diagnostic.targetVerticalRatio,
+    );
+    await waitFor(
+        `document.querySelector('[data-book="${diagnostic.key}"] .page-flip-2__curl-canvas').style.display === 'block'`,
+    );
+    await addPointerMarker(target);
+    await screenshot(`curl-${diagnostic.name}.png`);
+    freeEdgeCrossStates[diagnostic.name] = await evaluate(`({
         state: window.demoBooks[${JSON.stringify(diagnostic.key)}].getState(),
         canvasDisplay: document.querySelector('[data-book="${diagnostic.key}"] .page-flip-2__curl-canvas').style.display,
     })`);
@@ -523,6 +612,11 @@ for (const [name, state] of Object.entries(spineDragStates)) {
         failures.push(`${name} must render through the rounded curl`);
     }
 }
+for (const [name, state] of Object.entries(freeEdgeCrossStates)) {
+    if (state.state !== 'user_fold' || state.canvasDisplay !== 'block') {
+        failures.push(`${name} must render through the rounded curl`);
+    }
+}
 if (!htmlTextureProbe.ready || htmlTextureProbe.width <= 0 || htmlTextureProbe.height <= 0) {
     failures.push('The lazy HTML texture chunk must produce a drawable page image');
 }
@@ -595,6 +689,7 @@ console.log(
             bottomCornerState,
             topCornerState,
             spineDragStates,
+            freeEdgeCrossStates,
             htmlTextureProbe,
             texturePreparationCalls,
             ltrWhilePreparing,
