@@ -185,6 +185,11 @@ export class FlipCalculation {
         return this.corner;
     }
 
+    /** Keep fallback geometry aligned with the current pointer during a manual drag. */
+    public setCorner(corner: FlipCorner): void {
+        this.corner = corner;
+    }
+
     /**
      * Get start position for the page that is below the page to be flipped
      */

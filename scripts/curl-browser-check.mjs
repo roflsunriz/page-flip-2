@@ -235,6 +235,33 @@ const addPointerMarker = (point) =>
         document.body.appendChild(marker);
     })()`);
 
+const readCurlGeometry = (key) =>
+    evaluate(`(() => {
+        const book = window.demoBooks[${JSON.stringify(key)}];
+        const flip = book.getFlipController();
+        const render = book.getRender();
+        const mesh = render.curlOverlay?.renderer;
+        const columns = 56;
+        const rows = 40;
+        const rowDepth = (row) => {
+            let maximum = 0;
+            let sum = 0;
+            for (let column = 0; column <= columns; column += 1) {
+                const depth = mesh?.positions[(row * (columns + 1) + column) * 3 + 2] ?? 0;
+                maximum = Math.max(maximum, depth);
+                sum += depth;
+            }
+            return { maximum, mean: sum / (columns + 1) };
+        };
+        return {
+            anchor: flip.curlAnchor,
+            calculationCorner: flip.getCalculation()?.getCorner() ?? null,
+            fold: render.curlFold,
+            topEdge: rowDepth(0),
+            bottomEdge: rowDepth(rows),
+        };
+    })()`);
+
 const release = (point) =>
     command('Input.dispatchMouseEvent', {
         type: 'mouseReleased',
@@ -345,10 +372,13 @@ for (const diagnostic of [
     );
     await addPointerMarker(target);
     await screenshot(`curl-${diagnostic.name}.png`);
-    spineDragStates[diagnostic.name] = await evaluate(`({
+    spineDragStates[diagnostic.name] = {
+        ...(await evaluate(`({
         state: window.demoBooks[${JSON.stringify(diagnostic.key)}].getState(),
         canvasDisplay: document.querySelector('[data-book="${diagnostic.key}"] .page-flip-2__curl-canvas').style.display,
-    })`);
+        })`)),
+        geometry: await readCurlGeometry(diagnostic.key),
+    };
     await release(target);
     await waitFor(`window.demoBooks[${JSON.stringify(diagnostic.key)}].getState() === 'read'`);
 }
@@ -395,10 +425,13 @@ for (const diagnostic of [
     );
     await addPointerMarker(target);
     await screenshot(`curl-${diagnostic.name}.png`);
-    freeEdgeCrossStates[diagnostic.name] = await evaluate(`({
-        state: window.demoBooks[${JSON.stringify(diagnostic.key)}].getState(),
-        canvasDisplay: document.querySelector('[data-book="${diagnostic.key}"] .page-flip-2__curl-canvas').style.display,
-    })`);
+    freeEdgeCrossStates[diagnostic.name] = {
+        ...(await evaluate(`({
+            state: window.demoBooks[${JSON.stringify(diagnostic.key)}].getState(),
+            canvasDisplay: document.querySelector('[data-book="${diagnostic.key}"] .page-flip-2__curl-canvas').style.display,
+        })`)),
+        geometry: await readCurlGeometry(diagnostic.key),
+    };
     await release(target);
     await waitFor(`window.demoBooks[${JSON.stringify(diagnostic.key)}].getState() === 'read'`);
 }
@@ -611,14 +644,34 @@ if (bottomCornerState.state !== 'fold_corner' || bottomCornerState.canvasDisplay
 if (topCornerState.state !== 'fold_corner' || topCornerState.canvasDisplay !== 'block') {
     failures.push('The top corner hover must render through the rounded curl');
 }
-for (const [name, state] of Object.entries(spineDragStates)) {
-    if (state.state !== 'user_fold' || state.canvasDisplay !== 'block') {
-        failures.push(`${name} must render through the rounded curl`);
-    }
-}
-for (const [name, state] of Object.entries(freeEdgeCrossStates)) {
-    if (state.state !== 'user_fold' || state.canvasDisplay !== 'block') {
-        failures.push(`${name} must render through the rounded curl`);
+for (const states of [spineDragStates, freeEdgeCrossStates]) {
+    for (const [name, state] of Object.entries(states)) {
+        if (state.state !== 'user_fold' || state.canvasDisplay !== 'block') {
+            failures.push(`${name} must render through the rounded curl`);
+        }
+        const expectedCorner =
+            name.endsWith('-to-top') || name.endsWith('-top')
+                ? 'top'
+                : name.endsWith('-to-bottom') || name.endsWith('-bottom')
+                  ? 'bottom'
+                  : null;
+        if (expectedCorner !== null && state.geometry.calculationCorner !== expectedCorner) {
+            failures.push(
+                `${name} calculation corner must follow the current pointer: expected ${expectedCorner}, got ${state.geometry.calculationCorner}`,
+            );
+        }
+        if (
+            expectedCorner === 'top' &&
+            state.geometry.topEdge.mean <= state.geometry.bottomEdge.mean
+        ) {
+            failures.push(`${name} must lift the physical top edge more than the bottom edge`);
+        }
+        if (
+            expectedCorner === 'bottom' &&
+            state.geometry.bottomEdge.mean <= state.geometry.topEdge.mean
+        ) {
+            failures.push(`${name} must lift the physical bottom edge more than the top edge`);
+        }
     }
 }
 if (!htmlTextureProbe.ready || htmlTextureProbe.width <= 0 || htmlTextureProbe.height <= 0) {

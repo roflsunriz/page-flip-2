@@ -178,6 +178,7 @@ export class Flip {
 
         const rect = this.getBoundsRect();
         if (this.curlAnchor !== null && this.curlAnchorTracksPointer) {
+            this.calc.setCorner(pagePos.y >= rect.height / 2 ? FlipCorner.BOTTOM : FlipCorner.TOP);
             this.curlAnchor.y = calculateCurlAnchorY(
                 { x: 0, y: pagePos.y },
                 rect.pageWidth,
