@@ -310,6 +310,24 @@ export class Flip {
         const pageWidth = rect.pageWidth;
 
         if (this.isPointOnCorners(globalPos)) {
+            if (this.calc !== null) {
+                const bookPos = this.render.convertToBook(globalPos);
+                const pointerCorner =
+                    bookPos.y >= rect.height / 2 ? FlipCorner.BOTTOM : FlipCorner.TOP;
+                const pointerDirection = this.getDirectionByPoint(bookPos);
+
+                // A direct jump between corners can skip the non-corner area that
+                // normally resets hover state. Never reuse the previous corner's
+                // anchor or its still-running animation for the new pointer corner.
+                if (
+                    this.calc.getCorner() !== pointerCorner ||
+                    this.calc.getDirection() !== pointerDirection
+                ) {
+                    this.render.finishAnimation();
+                    this.reset();
+                }
+            }
+
             if (this.calc === null) {
                 if (!this.start(globalPos)) return;
 

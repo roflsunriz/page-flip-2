@@ -86,6 +86,11 @@ const waitFor = async (expression, timeout = 5000) => {
     throw new Error(`Timed out in wait ${currentWait}: ${expression}`);
 };
 
+const waitForRenderedFrames = () =>
+    evaluate(
+        `new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))`,
+    );
+
 const drag = async (key, edge, distanceRatio) => {
     const points = await evaluate(`(() => {
         const isCanvas = ${JSON.stringify(key)} === 'canvas';
@@ -296,12 +301,27 @@ const bottomCornerPoint = await hoverCorner('ltr', 'right', 'bottom');
 await waitFor(
     `document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display === 'block'`,
 );
-const bottomCornerState = await evaluate(`({
-    state: window.demoBooks.ltr.getState(),
-    canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
-})`);
+const bottomCornerState = {
+    ...(await evaluate(`({
+        state: window.demoBooks.ltr.getState(),
+        canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
+    })`)),
+    geometry: await readCurlGeometry('ltr'),
+};
 await addPointerMarker(bottomCornerPoint);
 await screenshot('curl-corner-bottom.png');
+
+const bottomToTopCornerPoint = await hoverCorner('ltr', 'right', 'top');
+await waitForRenderedFrames();
+const bottomToTopCornerState = {
+    ...(await evaluate(`({
+        state: window.demoBooks.ltr.getState(),
+        canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
+    })`)),
+    geometry: await readCurlGeometry('ltr'),
+};
+await addPointerMarker(bottomToTopCornerPoint);
+await screenshot('curl-corner-bottom-to-top.png');
 await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
 await waitFor(`window.demoBooks.ltr.getState() === 'read'`);
 
@@ -309,14 +329,65 @@ const topCornerPoint = await hoverCorner('ltr', 'right', 'top');
 await waitFor(
     `document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display === 'block'`,
 );
-const topCornerState = await evaluate(`({
-    state: window.demoBooks.ltr.getState(),
-    canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
-})`);
+const topCornerState = {
+    ...(await evaluate(`({
+        state: window.demoBooks.ltr.getState(),
+        canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
+    })`)),
+    geometry: await readCurlGeometry('ltr'),
+};
 await addPointerMarker(topCornerPoint);
 await screenshot('curl-corner-top.png');
+
+const topToBottomCornerPoint = await hoverCorner('ltr', 'right', 'bottom');
+await waitForRenderedFrames();
+const topToBottomCornerState = {
+    ...(await evaluate(`({
+        state: window.demoBooks.ltr.getState(),
+        canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
+    })`)),
+    geometry: await readCurlGeometry('ltr'),
+};
+await addPointerMarker(topToBottomCornerPoint);
+await screenshot('curl-corner-top-to-bottom.png');
 await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
 await waitFor(`window.demoBooks.ltr.getState() === 'read'`);
+
+await hoverCorner('rtl', 'left', 'bottom');
+await waitFor(
+    `document.querySelector('[data-book="rtl"] .page-flip-2__curl-canvas').style.display === 'block'`,
+);
+const rtlBottomToTopCornerPoint = await hoverCorner('rtl', 'left', 'top');
+await waitForRenderedFrames();
+const rtlBottomToTopCornerState = {
+    ...(await evaluate(`({
+        state: window.demoBooks.rtl.getState(),
+        canvasDisplay: document.querySelector('[data-book="rtl"] .page-flip-2__curl-canvas').style.display,
+    })`)),
+    geometry: await readCurlGeometry('rtl'),
+};
+await addPointerMarker(rtlBottomToTopCornerPoint);
+await screenshot('curl-rtl-corner-bottom-to-top.png');
+await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+await waitFor(`window.demoBooks.rtl.getState() === 'read'`);
+
+await hoverCorner('rtl', 'left', 'top');
+await waitFor(
+    `document.querySelector('[data-book="rtl"] .page-flip-2__curl-canvas').style.display === 'block'`,
+);
+const rtlTopToBottomCornerPoint = await hoverCorner('rtl', 'left', 'bottom');
+await waitForRenderedFrames();
+const rtlTopToBottomCornerState = {
+    ...(await evaluate(`({
+        state: window.demoBooks.rtl.getState(),
+        canvasDisplay: document.querySelector('[data-book="rtl"] .page-flip-2__curl-canvas').style.display,
+    })`)),
+    geometry: await readCurlGeometry('rtl'),
+};
+await addPointerMarker(rtlTopToBottomCornerPoint);
+await screenshot('curl-rtl-corner-top-to-bottom.png');
+await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+await waitFor(`window.demoBooks.rtl.getState() === 'read'`);
 
 const spineDragStates = {};
 for (const diagnostic of [
@@ -638,12 +709,34 @@ const programmaticLtr = await evaluate(`({
 })`);
 
 const failures = [];
+const assertCornerGeometry = (name, state, expectedCorner) => {
+    if (state.geometry.calculationCorner !== expectedCorner) {
+        failures.push(
+            `${name} calculation corner must follow the current pointer: expected ${expectedCorner}, got ${state.geometry.calculationCorner}`,
+        );
+    }
+    if (expectedCorner === 'top' && state.geometry.topEdge.mean <= state.geometry.bottomEdge.mean) {
+        failures.push(`${name} must lift the physical top edge more than the bottom edge`);
+    }
+    if (
+        expectedCorner === 'bottom' &&
+        state.geometry.bottomEdge.mean <= state.geometry.topEdge.mean
+    ) {
+        failures.push(`${name} must lift the physical bottom edge more than the top edge`);
+    }
+};
 if (bottomCornerState.state !== 'fold_corner' || bottomCornerState.canvasDisplay !== 'block') {
     failures.push('The bottom corner hover must render through the rounded curl');
 }
+assertCornerGeometry('bottom corner hover', bottomCornerState, 'bottom');
+assertCornerGeometry('bottom-to-top corner hover', bottomToTopCornerState, 'top');
 if (topCornerState.state !== 'fold_corner' || topCornerState.canvasDisplay !== 'block') {
     failures.push('The top corner hover must render through the rounded curl');
 }
+assertCornerGeometry('top corner hover', topCornerState, 'top');
+assertCornerGeometry('top-to-bottom corner hover', topToBottomCornerState, 'bottom');
+assertCornerGeometry('RTL bottom-to-top corner hover', rtlBottomToTopCornerState, 'top');
+assertCornerGeometry('RTL top-to-bottom corner hover', rtlTopToBottomCornerState, 'bottom');
 for (const states of [spineDragStates, freeEdgeCrossStates]) {
     for (const [name, state] of Object.entries(states)) {
         if (state.state !== 'user_fold' || state.canvasDisplay !== 'block') {
@@ -655,23 +748,7 @@ for (const states of [spineDragStates, freeEdgeCrossStates]) {
                 : name.endsWith('-to-bottom') || name.endsWith('-bottom')
                   ? 'bottom'
                   : null;
-        if (expectedCorner !== null && state.geometry.calculationCorner !== expectedCorner) {
-            failures.push(
-                `${name} calculation corner must follow the current pointer: expected ${expectedCorner}, got ${state.geometry.calculationCorner}`,
-            );
-        }
-        if (
-            expectedCorner === 'top' &&
-            state.geometry.topEdge.mean <= state.geometry.bottomEdge.mean
-        ) {
-            failures.push(`${name} must lift the physical top edge more than the bottom edge`);
-        }
-        if (
-            expectedCorner === 'bottom' &&
-            state.geometry.bottomEdge.mean <= state.geometry.topEdge.mean
-        ) {
-            failures.push(`${name} must lift the physical bottom edge more than the top edge`);
-        }
+        if (expectedCorner !== null) assertCornerGeometry(name, state, expectedCorner);
     }
 }
 if (!htmlTextureProbe.ready || htmlTextureProbe.width <= 0 || htmlTextureProbe.height <= 0) {
@@ -744,7 +821,11 @@ console.log(
     JSON.stringify(
         {
             bottomCornerState,
+            bottomToTopCornerState,
             topCornerState,
+            topToBottomCornerState,
+            rtlBottomToTopCornerState,
+            rtlTopToBottomCornerState,
             spineDragStates,
             freeEdgeCrossStates,
             htmlTextureProbe,
