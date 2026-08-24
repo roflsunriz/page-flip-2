@@ -260,6 +260,7 @@ const readCurlGeometry = (key) =>
         };
         return {
             anchor: flip.curlAnchor,
+            canvasDisplay: document.querySelector('[data-book="${key}"] .page-flip-2__curl-canvas').style.display,
             calculationCorner: flip.getCalculation()?.getCorner() ?? null,
             fold: render.curlFold,
             topEdge: rowDepth(0),
@@ -290,6 +291,7 @@ const runInsetHoverRoundTrip = async (key, edge, name) => {
         });
     const moveSegment = async (from, to) => {
         const steps = 48;
+        const edgeTrace = [];
         for (let step = 1; step <= steps; step += 1) {
             const progress = step / steps;
             await move({
@@ -297,8 +299,16 @@ const runInsetHoverRoundTrip = async (key, edge, name) => {
                 y: from.y + (to.y - from.y) * progress,
             });
             await Bun.sleep(8);
+            if (step >= 34) {
+                await evaluate(`new Promise((resolve) => requestAnimationFrame(resolve))`);
+                const geometry = await readCurlGeometry(key);
+                if (geometry.canvasDisplay === 'block' && geometry.fold !== null) {
+                    edgeTrace.push({ progress, geometry });
+                }
+            }
         }
         await waitForRenderedFrames();
+        return edgeTrace;
     };
 
     await move(points.outerTop);
@@ -307,7 +317,7 @@ const runInsetHoverRoundTrip = async (key, edge, name) => {
     );
     await move(points.innerTop);
     await Bun.sleep(32);
-    await moveSegment(points.innerTop, points.innerBottom);
+    const descendingEdgeTrace = await moveSegment(points.innerTop, points.innerBottom);
     const atBottom = {
         point: points.innerBottom,
         geometry: await readCurlGeometry(key),
@@ -316,7 +326,7 @@ const runInsetHoverRoundTrip = async (key, edge, name) => {
     await addPointerMarker(points.innerBottom);
     await screenshot(`curl-${name}-inset-hover-at-bottom.png`);
 
-    await moveSegment(points.innerBottom, points.innerTop);
+    const ascendingEdgeTrace = await moveSegment(points.innerBottom, points.innerTop);
     const atTop = {
         point: points.innerTop,
         geometry: await readCurlGeometry(key),
@@ -325,7 +335,7 @@ const runInsetHoverRoundTrip = async (key, edge, name) => {
     await addPointerMarker(points.innerTop);
     await screenshot(`curl-${name}-inset-hover-back-at-top.png`);
 
-    return { atBottom, atTop };
+    return { ascendingEdgeTrace, atBottom, atTop, descendingEdgeTrace };
 };
 
 const release = (point) =>
@@ -824,10 +834,19 @@ for (const [name, roundTrip] of Object.entries({
     if (roundTrip.atBottom.state !== 'fold_corner' || roundTrip.atTop.state !== 'fold_corner') {
         failures.push(`${name} must remain in corner-fold state at both endpoints`);
     }
+    if (roundTrip.descendingEdgeTrace.length === 0 || roundTrip.ascendingEdgeTrace.length === 0) {
+        failures.push(`${name} must capture rendered frames while entering both edge zones`);
+    }
     assertCornerGeometry(`${name} at bottom`, roundTrip.atBottom, 'bottom');
     assertOppositeEdgeIsFlat(`${name} at bottom`, roundTrip.atBottom, 'bottom');
     assertCornerGeometry(`${name} back at top`, roundTrip.atTop, 'top');
     assertOppositeEdgeIsFlat(`${name} back at top`, roundTrip.atTop, 'top');
+    for (const [index, sample] of roundTrip.descendingEdgeTrace.entries()) {
+        assertOppositeEdgeIsFlat(`${name} descending frame ${index}`, sample, 'bottom');
+    }
+    for (const [index, sample] of roundTrip.ascendingEdgeTrace.entries()) {
+        assertOppositeEdgeIsFlat(`${name} ascending frame ${index}`, sample, 'top');
+    }
 }
 for (const states of [spineDragStates, freeEdgeCrossStates]) {
     for (const [name, state] of Object.entries(states)) {

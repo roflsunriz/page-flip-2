@@ -351,9 +351,12 @@ export class Flip {
 
                 this.setState(FlippingState.FOLD_CORNER);
 
-                this.calc.calc({ x: pageWidth - 1, y: 1 });
-
                 const yStart = this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height - 1 : 1;
+                if (this.curlAnchor !== null) {
+                    this.curlAnchor.y =
+                        this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height : 0;
+                }
+                this.calc.calc({ x: pageWidth - 1, y: yStart });
 
                 const yDest =
                     this.calc.getCorner() === FlipCorner.BOTTOM
