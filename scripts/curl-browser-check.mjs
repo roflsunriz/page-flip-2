@@ -267,6 +267,67 @@ const readCurlGeometry = (key) =>
         };
     })()`);
 
+const runInsetHoverRoundTrip = async (key, edge, name) => {
+    const points = await evaluate(`(() => {
+        const root = document.querySelector('[data-book="${key}"]');
+        root.scrollIntoView({ block: 'center' });
+        const surface = root.querySelector('.page-flip-2__block');
+        const surfaceRect = surface.getBoundingClientRect();
+        const rect = window.demoBooks[${JSON.stringify(key)}].getRender().getRect();
+        const fromRight = ${JSON.stringify(edge)} === 'right';
+        const freeEdgeX = surfaceRect.left + rect.left + (fromRight ? rect.width : 0);
+        return {
+            outerTop: { x: freeEdgeX + (fromRight ? -2 : 2), y: surfaceRect.top + rect.top + 2 },
+            innerTop: { x: freeEdgeX + (fromRight ? -50 : 50), y: surfaceRect.top + rect.top + 2 },
+            innerBottom: { x: freeEdgeX + (fromRight ? -50 : 50), y: surfaceRect.top + rect.top + rect.height - 2 },
+        };
+    })()`);
+    const move = (point) =>
+        command('Input.dispatchMouseEvent', {
+            type: 'mouseMoved',
+            x: point.x,
+            y: point.y,
+        });
+    const moveSegment = async (from, to) => {
+        const steps = 48;
+        for (let step = 1; step <= steps; step += 1) {
+            const progress = step / steps;
+            await move({
+                x: from.x + (to.x - from.x) * progress,
+                y: from.y + (to.y - from.y) * progress,
+            });
+            await Bun.sleep(8);
+        }
+        await waitForRenderedFrames();
+    };
+
+    await move(points.outerTop);
+    await waitFor(
+        `document.querySelector('[data-book="${key}"] .page-flip-2__curl-canvas').style.display === 'block'`,
+    );
+    await move(points.innerTop);
+    await Bun.sleep(32);
+    await moveSegment(points.innerTop, points.innerBottom);
+    const atBottom = {
+        point: points.innerBottom,
+        geometry: await readCurlGeometry(key),
+        state: await evaluate(`window.demoBooks[${JSON.stringify(key)}].getState()`),
+    };
+    await addPointerMarker(points.innerBottom);
+    await screenshot(`curl-${name}-inset-hover-at-bottom.png`);
+
+    await moveSegment(points.innerBottom, points.innerTop);
+    const atTop = {
+        point: points.innerTop,
+        geometry: await readCurlGeometry(key),
+        state: await evaluate(`window.demoBooks[${JSON.stringify(key)}].getState()`),
+    };
+    await addPointerMarker(points.innerTop);
+    await screenshot(`curl-${name}-inset-hover-back-at-top.png`);
+
+    return { atBottom, atTop };
+};
+
 const release = (point) =>
     command('Input.dispatchMouseEvent', {
         type: 'mouseReleased',
@@ -386,6 +447,14 @@ const rtlTopToBottomCornerState = {
 };
 await addPointerMarker(rtlTopToBottomCornerPoint);
 await screenshot('curl-rtl-corner-top-to-bottom.png');
+await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+await waitFor(`window.demoBooks.rtl.getState() === 'read'`);
+
+const ltrInsetHoverRoundTrip = await runInsetHoverRoundTrip('ltr', 'right', 'ltr');
+await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
+await waitFor(`window.demoBooks.ltr.getState() === 'read'`);
+
+const rtlInsetHoverRoundTrip = await runInsetHoverRoundTrip('rtl', 'left', 'rtl');
 await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 });
 await waitFor(`window.demoBooks.rtl.getState() === 'read'`);
 
@@ -725,6 +794,17 @@ const assertCornerGeometry = (name, state, expectedCorner) => {
         failures.push(`${name} must lift the physical bottom edge more than the top edge`);
     }
 };
+const assertOppositeEdgeIsFlat = (name, state, expectedCorner) => {
+    const oppositeMaximum =
+        expectedCorner === 'top'
+            ? state.geometry.bottomEdge.maximum
+            : state.geometry.topEdge.maximum;
+    if (oppositeMaximum > 0.5) {
+        failures.push(
+            `${name} must leave the opposite physical edge flat, got Z=${oppositeMaximum}`,
+        );
+    }
+};
 if (bottomCornerState.state !== 'fold_corner' || bottomCornerState.canvasDisplay !== 'block') {
     failures.push('The bottom corner hover must render through the rounded curl');
 }
@@ -737,6 +817,18 @@ assertCornerGeometry('top corner hover', topCornerState, 'top');
 assertCornerGeometry('top-to-bottom corner hover', topToBottomCornerState, 'bottom');
 assertCornerGeometry('RTL bottom-to-top corner hover', rtlBottomToTopCornerState, 'top');
 assertCornerGeometry('RTL top-to-bottom corner hover', rtlTopToBottomCornerState, 'bottom');
+for (const [name, roundTrip] of Object.entries({
+    'LTR 50px inset hover': ltrInsetHoverRoundTrip,
+    'RTL 50px inset hover': rtlInsetHoverRoundTrip,
+})) {
+    if (roundTrip.atBottom.state !== 'fold_corner' || roundTrip.atTop.state !== 'fold_corner') {
+        failures.push(`${name} must remain in corner-fold state at both endpoints`);
+    }
+    assertCornerGeometry(`${name} at bottom`, roundTrip.atBottom, 'bottom');
+    assertOppositeEdgeIsFlat(`${name} at bottom`, roundTrip.atBottom, 'bottom');
+    assertCornerGeometry(`${name} back at top`, roundTrip.atTop, 'top');
+    assertOppositeEdgeIsFlat(`${name} back at top`, roundTrip.atTop, 'top');
+}
 for (const states of [spineDragStates, freeEdgeCrossStates]) {
     for (const [name, state] of Object.entries(states)) {
         if (state.state !== 'user_fold' || state.canvasDisplay !== 'block') {
@@ -826,6 +918,8 @@ console.log(
             topToBottomCornerState,
             rtlBottomToTopCornerState,
             rtlTopToBottomCornerState,
+            ltrInsetHoverRoundTrip,
+            rtlInsetHoverRoundTrip,
             spineDragStates,
             freeEdgeCrossStates,
             htmlTextureProbe,

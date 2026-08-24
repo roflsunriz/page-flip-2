@@ -308,10 +308,13 @@ export class Flip {
 
         const rect = this.getBoundsRect();
         const pageWidth = rect.pageWidth;
+        const cornerPreviewSize = Math.min(50, rect.height * 0.2);
+        let hoverPagePos: Point = null;
 
         if (this.isPointOnCorners(globalPos)) {
             if (this.calc !== null) {
                 const bookPos = this.render.convertToBook(globalPos);
+                const pagePos = this.render.convertToPage(globalPos);
                 const pointerCorner =
                     bookPos.y >= rect.height / 2 ? FlipCorner.BOTTOM : FlipCorner.TOP;
                 const pointerDirection = this.getDirectionByPoint(bookPos);
@@ -325,6 +328,21 @@ export class Flip {
                 ) {
                     this.render.finishAnimation();
                     this.reset();
+                } else {
+                    // Once the pointer moves after the scripted corner preview,
+                    // it owns the fold. Stop preview frames from overwriting the
+                    // real position, but keep the preview local to the active edge.
+                    this.render.finishAnimation();
+                    if (this.calc !== null && this.curlAnchor !== null) {
+                        this.curlAnchor.y = pointerCorner === FlipCorner.BOTTOM ? rect.height : 0;
+                        hoverPagePos = {
+                            x: pagePos.x,
+                            y:
+                                pointerCorner === FlipCorner.BOTTOM
+                                    ? Math.min(pagePos.y, rect.height - cornerPreviewSize)
+                                    : Math.max(pagePos.y, cornerPreviewSize),
+                        };
+                    }
                 }
             }
 
@@ -335,22 +353,21 @@ export class Flip {
 
                 this.calc.calc({ x: pageWidth - 1, y: 1 });
 
-                const fixedCornerSize = 50;
                 const yStart = this.calc.getCorner() === FlipCorner.BOTTOM ? rect.height - 1 : 1;
 
                 const yDest =
                     this.calc.getCorner() === FlipCorner.BOTTOM
-                        ? rect.height - fixedCornerSize
-                        : fixedCornerSize;
+                        ? rect.height - cornerPreviewSize
+                        : cornerPreviewSize;
 
                 this.animateFlippingTo(
                     { x: pageWidth - 1, y: yStart },
-                    { x: pageWidth - fixedCornerSize, y: yDest },
+                    { x: pageWidth - cornerPreviewSize, y: yDest },
                     false,
                     false,
                 );
             } else {
-                this.do(this.render.convertToPage(globalPos));
+                this.do(hoverPagePos ?? this.render.convertToPage(globalPos));
             }
         } else {
             this.setState(FlippingState.READ);
