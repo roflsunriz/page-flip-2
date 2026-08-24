@@ -688,8 +688,16 @@ const ltrCompletePoint = await drag('ltr', 'right', 1.2);
 await waitFor(
     `document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display === 'block'`,
 );
+await evaluate(`window.demoBooks.ltr.getSettings().flippingTime = 600`);
 await release(ltrCompletePoint);
 await Bun.sleep(300);
+const ltrWhileSettling = await evaluate(`({
+    state: window.demoBooks.ltr.getState(),
+    page: window.demoBooks.ltr.getCurrentPageIndex(),
+    canvasDisplay: document.querySelector('[data-book="ltr"] .page-flip-2__curl-canvas').style.display,
+    animationActive: window.demoBooks.ltr.getRender().animation !== null,
+})`);
+await Bun.sleep(350);
 const ltrAfterComplete = await evaluate(`({
     state: window.demoBooks.ltr.getState(),
     page: window.demoBooks.ltr.getCurrentPageIndex(),
@@ -710,8 +718,16 @@ const rtlCompletePoint = await drag('rtl', 'left', 1.2);
 await waitFor(
     `document.querySelector('[data-book="rtl"] .page-flip-2__curl-canvas').style.display === 'block'`,
 );
+await evaluate(`window.demoBooks.rtl.getSettings().flippingTime = 600`);
 await release(rtlCompletePoint);
 await Bun.sleep(300);
+const rtlWhileSettling = await evaluate(`({
+    state: window.demoBooks.rtl.getState(),
+    page: window.demoBooks.rtl.getCurrentPageIndex(),
+    canvasDisplay: document.querySelector('[data-book="rtl"] .page-flip-2__curl-canvas').style.display,
+    animationActive: window.demoBooks.rtl.getRender().animation !== null,
+})`);
+await Bun.sleep(350);
 const rtlAfterComplete = await evaluate(`({
     state: window.demoBooks.rtl.getState(),
     page: window.demoBooks.rtl.getCurrentPageIndex(),
@@ -888,11 +904,27 @@ if (
 if (ltrAfterCancel.state !== 'read' || ltrAfterCancel.page !== 0) {
     failures.push('LTR drag below the threshold must settle back without changing the page');
 }
+if (
+    ltrWhileSettling.state !== 'user_fold' ||
+    ltrWhileSettling.page !== 0 ||
+    ltrWhileSettling.canvasDisplay !== 'block' ||
+    !ltrWhileSettling.animationActive
+) {
+    failures.push('LTR release must keep rendering intermediate turn frames for flippingTime');
+}
 if (ltrAfterComplete.state !== 'read' || ltrAfterComplete.page !== 2) {
     failures.push('LTR drag beyond the threshold must complete the turn');
 }
 if (rtlDuring.state !== 'user_fold' || rtlDuring.page !== 0) {
     failures.push('RTL must use the mirrored rounded curl while dragging');
+}
+if (
+    rtlWhileSettling.state !== 'user_fold' ||
+    rtlWhileSettling.page !== 0 ||
+    rtlWhileSettling.canvasDisplay !== 'block' ||
+    !rtlWhileSettling.animationActive
+) {
+    failures.push('RTL release must keep rendering intermediate turn frames for flippingTime');
 }
 if (rtlAfterComplete.state !== 'read' || rtlAfterComplete.page !== 2) {
     failures.push('RTL drag beyond the threshold must complete the logical next turn');
@@ -946,8 +978,10 @@ console.log(
             ltrWhilePreparing,
             ltrDuring,
             ltrAfterCancel,
+            ltrWhileSettling,
             ltrAfterComplete,
             rtlDuring,
+            rtlWhileSettling,
             rtlAfterComplete,
             canvasDuring,
             canvasAfterComplete,

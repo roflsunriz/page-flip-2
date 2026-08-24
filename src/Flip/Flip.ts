@@ -294,6 +294,8 @@ export class Flip {
             pos,
             { x: complete ? -rect.pageWidth : rect.pageWidth, y },
             complete,
+            true,
+            this.app.getSettings().flippingTime,
         );
     }
 
@@ -387,12 +389,14 @@ export class Flip {
      * @param {Point} dest - animation end point
      * @param {boolean} isTurned - will the page turn over, or just bring it back
      * @param {boolean} needReset - reset the flipping process at the end of the animation
+     * @param {number} duration - explicit duration; omitted for distance-scaled previews
      */
     private animateFlippingTo(
         start: Point,
         dest: Point,
         isTurned: boolean,
         needReset = true,
+        duration?: number,
     ): void {
         const distance = Math.max(Math.abs(start.x - dest.x), Math.abs(start.y - dest.y));
         const frameCount = 120;
@@ -405,9 +409,9 @@ export class Flip {
             return () => this.do(point);
         });
 
-        const duration = this.getAnimationDuration(distance);
+        const animationDuration = duration ?? this.getAnimationDuration(distance);
 
-        this.render.startAnimation(frames, duration, () => {
+        this.render.startAnimation(frames, animationDuration, () => {
             // callback function
             if (!this.calc) return;
 
