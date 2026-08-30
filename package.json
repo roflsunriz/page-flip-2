@@ -1,6 +1,6 @@
 {
     "name": "page-flip-2",
-    "version": "0.3.0",
+    "version": "0.3.4",
     "description": "Bun-first page-turning library with bidirectional reading support",
     "type": "module",
     "main": "./dist/page-flip-2.js",
@@ -26,7 +26,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/roflsunriz/page-flip-2.git"
+        "url": "git+https://github.com/roflsunriz/page-flip-2.git"
     },
     "homepage": "https://github.com/roflsunriz/page-flip-2",
     "engines": {
