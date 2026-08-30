@@ -479,7 +479,10 @@ export abstract class Render {
                 this.direction === FlipDirection.FORWARD ? this.rightPage : this.leftPage;
             if (frontPage !== null) {
                 const rect = this.getRect();
-                const backPage = this.orientation === Orientation.PORTRAIT ? this.bottomPage : page;
+                const backPage =
+                    this.orientation === Orientation.PORTRAIT || this.app.isRtl()
+                        ? this.bottomPage
+                        : page;
                 this.curlOverlay?.prepare(frontPage, backPage, rect.pageWidth, rect.height);
             }
         } else if (page === null) {
