@@ -64,3 +64,9 @@ bun run release:check
 - 未コミット変更で問題が起きた場合は、対象差分を確認してから、変更したファイルだけをGitの直前状態へ戻す。
 - コミット後に問題が判明した場合は履歴を書き換えず、原因を修正する新しいコミットを作成する。
 - `dist` は生成物なので、ソースと設定を復旧した後に `bun run build` で再生成する。
+
+## Dependabot PR の更新
+
+前提は `.github/dependabot.yml` と PR 用 CI（CI）です。更新 PR の head SHA と `gh pr checks <PR番号>` の結果を確認してください。patch／minor は全チェック成功後に自動取り込みされます。初回 CI 失敗は failed jobs のみを 1 回再実行し、再失敗時は指定した lockfile を再生成し、CI を再実行します。
+
+設定を変えたときは `actionlint .github/workflows/dependabot-automation.yml` と実際の PR の Actions 結果を確認します。問題があれば呼び出し先の共通 workflow SHA を直前の検証済み値へ戻すコミットを push します。取り込まれた依存更新に問題があれば通常の revert コミットで復旧します。

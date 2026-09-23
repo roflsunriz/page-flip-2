@@ -92,3 +92,7 @@ pageFlip
 ## ライセンスと由来
 
 MIT Licenseです。原著作者の著作権表示とライセンス全文は [LICENSE](./LICENSE)、3Dカールの設計参考元と実行時依存の表示は [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) に保持しています。
+
+## 依存更新の自動処理
+
+Dependabot は対象の依存関係を毎週確認します。patch／minor 更新は PR のチェック（CI）が成功した後に自動で squash merge されます。CI の失敗ジョブは 1 回だけ再実行します。再失敗時は指定した lockfile を再生成し、CI を再実行します。major 更新は手動で確認します。
