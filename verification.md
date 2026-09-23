@@ -7,3 +7,5 @@
 実際の Dependabot PR がまだない場合、動作経路は未検証として扱う。実 PR 発生後に自動化ジョブ、CI の再試行、マージ結果を確認する。
 
 初回の GitHub CI は追加した3つの YAML の Prettier 書式で失敗した。設定の意味を変えず整形し、actionlint と Prettier の検査を再実行した。
+
+大量の Dependabot PR により CI 完了より分類が遅れる場合でも、分類後の `workflow_dispatch` が現在の PR 番号と head SHA を照合して再評価する。別の作成者、古い SHA、未完了の CI はマージしない。
