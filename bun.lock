@@ -10,7 +10,7 @@
         "@zumer/snapdom": "2.24.7",
         "eslint": "10.11.0",
         "global-jsdom": "29.0.0",
-        "globals": "17.11.0",
+        "globals": "17.12.0",
         "jsdom": "29.1.1",
         "prettier": "3.9.8",
         "typescript": "6.0.3",
@@ -180,7 +180,7 @@
 
     "global-jsdom": ["global-jsdom@29.0.0", "", { "peerDependencies": { "jsdom": ">=29 <30" } }, "sha512-S9Wl+EHDfkO8DYleqMYzf14hKfwIysEN/FvoVRdPif3uUGUlmiHs/gj1PVKXhmJ20DwUVACtdxxhNYYvvn9K7A=="],
 
-    "globals": ["globals@17.11.0", "", {}, "sha512-Z2I8hM+PbJDXQDq3Icgpzv+mPdwr68iZUU9d5WW4FuXfDUQfkZaZuvjMv42/5crNyw154+9+VWXbYrUgDXbxNw=="],
+    "globals": ["globals@17.12.0", "", {}, "sha512-cezEd/DTyyht9cvSSURyygXPfy04GtWO/5e6ZPvH7fCtjKz9PYOmuawphw1Ctd1f6C+5JypXfGD7ahNMXvevBA=="],
 
     "hashery": ["hashery@1.5.1", "", { "dependencies": { "hookified": "^1.15.0" } }, "sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ=="],
 
