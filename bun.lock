@@ -9,7 +9,7 @@
         "@types/bun": "1.4.2",
         "@zumer/snapdom": "2.24.7",
         "eslint": "10.11.0",
-        "global-jsdom": "29.0.0",
+        "global-jsdom": "30.0.0",
         "globals": "17.12.0",
         "jsdom": "29.1.1",
         "prettier": "3.9.9",
@@ -178,7 +178,7 @@
 
     "glob-parent": ["glob-parent@6.0.2", "", { "dependencies": { "is-glob": "^4.0.3" } }, "sha512-XxwI8EOhVQgWp6iDL+3b0r86f4d6AX6zSU55HfB4ydCEuXLXc5FcYeOu+nnGftS4TEju/11rt4KJPTMgbfmv4A=="],
 
-    "global-jsdom": ["global-jsdom@29.0.0", "", { "peerDependencies": { "jsdom": ">=29 <30" } }, "sha512-S9Wl+EHDfkO8DYleqMYzf14hKfwIysEN/FvoVRdPif3uUGUlmiHs/gj1PVKXhmJ20DwUVACtdxxhNYYvvn9K7A=="],
+    "global-jsdom": ["global-jsdom@30.0.0", "", { "peerDependencies": { "jsdom": ">=30 <31" } }, "sha512-X7oTdIs442ApUNvzHlDtoFfTyVVCFsO3wwKYNTziacCgxH+l+z9ZVeakLpK8SGOJKdCKR7xMPoZ848ZdEHc+RA=="],
 
     "globals": ["globals@17.12.0", "", {}, "sha512-cezEd/DTyyht9cvSSURyygXPfy04GtWO/5e6ZPvH7fCtjKz9PYOmuawphw1Ctd1f6C+5JypXfGD7ahNMXvevBA=="],
 
