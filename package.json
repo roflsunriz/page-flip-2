@@ -59,7 +59,7 @@
     "devDependencies": {
         "@eslint/js": "10.0.1",
         "@types/bun": "1.4.2",
-        "@zumer/snapdom": "3.1.0",
+        "@zumer/snapdom": "3.2.0",
         "eslint": "10.11.0",
         "global-jsdom": "30.0.0",
         "globals": "17.12.0",
