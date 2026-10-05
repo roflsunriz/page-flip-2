@@ -30,7 +30,7 @@ bun test
 bun run build
 ```
 
-公開前の全検査は `bun run release:check` でまとめて実行できます。package作成時には `prepack` がBunビルドを再実行するため、古い `dist` は梱包されません。
+公開前の全検査は `bun run release:check` でまとめて実行できます。配布パッケージの作成には `bun run pack:release` を使います。このコマンドは `scripts/pack.mjs` でBunビルドを再実行し、新しい `dist` を梱包します。
 
 ビルド成果物は `dist/page-flip-2.js` に生成されます。CSSはbundle内から一度だけ注入されるため、別のCSSファイルを読み込む必要はありません。
 
@@ -65,7 +65,7 @@ pageFlip.loadFromHTML(document.querySelectorAll<HTMLElement>('[data-page-flip-2-
 
 3Dカールの最大半径は `curlRadius` でピクセル指定できます。省略時はページ幅の32%です。小さい値ほど折れが強くなります。ドラッグを離したときにページを確定する進捗は `flipThreshold` で0〜100の範囲から指定でき、既定値は50です。
 
-HTMLページは3D描画中だけ静止画像へ変換するため、別chunkへ同梱した `@zumer/snapdom` を遅延読み込みします。通常表示中のDOMとイベントハンドラーはそのまま維持されます。Canvas画像ページは読み込み済み画像を直接WebGLテクスチャへ渡します。
+HTMLページは3D描画中だけ静止画像へ変換します。そのため、別チャンクに同梱した `@zumer/snapdom` を遅延読み込みします。通常表示中のDOMとイベントハンドラーはそのまま維持されます。Canvas画像ページは読み込み済み画像を直接WebGLテクスチャへ渡します。
 
 Canvas画像モードの余白色は `backgroundColor` で指定できます。`drawShadow: false` はめくり中の影に加えて中央の綴じ影も無効にします。
 
@@ -73,7 +73,7 @@ Canvas画像モードの余白色は `backgroundColor` で指定できます。`
 
 `pageFlip.destroy()` は生成したDOM、イベント、描画ループを破棄し、渡されたroot要素とHTMLページを初期状態へ戻します。同じrootへ新しいインスタンスを作り直せます。
 
-イベントのdataは型引数で指定できます。`on()` は同じインスタンスを返すため、登録を連結できます。
+イベントの`data`の型は型引数で指定できます。`on()` は同じインスタンスを返すため、イベント登録を連結できます。
 
 ```ts
 pageFlip
