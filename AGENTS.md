@@ -20,3 +20,7 @@ Get-Content -Raw -LiteralPath .\COMMON-AGENTS.md
 
 ## Environment
 <必要に応じて適宜書き足すこと。>
+
+## 依存更新時の注意
+
+- 2026-10-11 時点で `source-map-js` は `jsdom` から `css-tree` を経由する間接依存。`bun audit` が GHSA-68fv-2mgg-jv7q で失敗する場合、`bun.lock` の版を確認して修正版へ更新する。手順は `how-to-update.md` と `verification.md` を参照する。
