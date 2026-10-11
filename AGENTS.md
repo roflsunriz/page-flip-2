@@ -24,3 +24,4 @@ Get-Content -Raw -LiteralPath .\COMMON-AGENTS.md
 ## 依存更新時の注意
 
 - 2026-10-11 時点で `source-map-js` は `jsdom` から `css-tree` を経由する間接依存。`bun audit` が GHSA-68fv-2mgg-jv7q で失敗する場合、`bun.lock` の版を確認して修正版へ更新する。手順は `how-to-update.md` と `verification.md` を参照する。
+- 2026-10-11 時点で `tr46` は `whatwg-url` 経由で 7.0.0 が解決され、旧 `tr46@6.0.0` 用パッチは適用されない。間接依存を更新した際は `bun.lock` の解決版と不要になったパッチを確認する。

@@ -19,7 +19,6 @@ if (relative(projectRoot, stage).startsWith('..')) {
 
 try {
     const manifest = JSON.parse(await readFile(join(projectRoot, 'package.json'), 'utf8'));
-    delete manifest.patchedDependencies;
     delete manifest.devDependencies;
     delete manifest.scripts;
 

@@ -59,16 +59,13 @@
     "devDependencies": {
         "@eslint/js": "10.0.1",
         "@types/bun": "1.4.2",
-        "@zumer/snapdom": "3.3.0",
+        "@zumer/snapdom": "3.3.3",
         "eslint": "10.12.0",
         "global-jsdom": "30.0.0",
         "globals": "17.13.0",
         "jsdom": "30.1.2",
-        "prettier": "3.9.9",
+        "prettier": "3.9.10",
         "typescript": "6.0.3",
         "typescript-eslint": "8.71.1"
-    },
-    "patchedDependencies": {
-        "tr46@6.0.0": "patches/tr46@6.0.0.patch"
     }
 }
