@@ -1,8 +1,12 @@
 # 検証手順
 
+## 依存関係の検証
+
+`bun install --frozen-lockfile` の後、`bun run release:check` と `bun run build` を実行する。Dependabot PR の CI が `bun audit` で失敗した場合は、ログに示された依存経路と脆弱性情報の修正版を確認する。lockfile 更新後に `bun audit` を再実行し、PR の最新 head SHA の CI 結果を確認する。
+
 ## Dependabot 自動処理（2026-09-23）
 
-`.github/workflows/dependabot-automation.yml` を actionlint で検査し、PR 用 workflow 名（CI）と一致することを確認する。Dependabot の patch／minor かつ全 PR チェック成功の場合だけ取り込み、major・古い SHA・再失敗は残す。
+`.github/workflows/dependabot-automation.yml` を actionlint で検査し、PR 用 workflow 名（CI）と一致することを確認する。Dependabot の更新は major を含めて全 PR チェック成功の場合だけ取り込み、古い SHA・再失敗は残す。
 
 実際の Dependabot PR がまだない場合、動作経路は未検証として扱う。実 PR 発生後に自動化ジョブ、CI の再試行、マージ結果を確認する。
 
