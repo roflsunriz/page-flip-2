@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Security
+
+- Dependabot の更新 PR を脆弱性検査から再開できるよう、`jsdom` 経由の間接依存 `source-map-js` を修正版へ更新した。
+
 ### Fixed
 
 - CI と Dependabot の分類の実行順が前後しても更新を取りこぼさないよう、同じ PR 番号と head SHA を再照合する経路を追加した。
