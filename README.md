@@ -22,19 +22,7 @@ bun install
 
 ## 開発時の確認
 
-```powershell
-bun run lint
-bun run format:check
-bun run type-check
-bun test
-bun run build
-```
-
-公開前の全検査は `bun run release:check` でまとめて実行できます。配布パッケージの作成には `bun run pack:release` を使います。このコマンドは `scripts/pack.mjs` でBunビルドを再実行し、新しい `dist` を梱包します。
-
-ビルド成果物は `dist/page-flip-2.js` に生成されます。CSSはbundle内から一度だけ注入されるため、別のCSSファイルを読み込む必要はありません。
-
-`bun run demo` でLTRとRTLを並べた動作確認用ページを起動できます。`readingDirection` の既定値は `ReadingDirection.LTR` です。
+具体的な手順・構成・知見は [findings.md](https://github.com/roflsunriz/page-flip-2/blob/main/findings.md#readme-4) に移動しました。着手前に該当条件を確認してください。
 
 ## 使用例
 
@@ -87,7 +75,7 @@ pageFlip
 
 ## 上流Issue / PRの監査
 
-上流へ報告された項目の取込状況と、対象外にした理由は [docs/upstream-audit.md](docs/upstream-audit.md) に全件記録しています。
+具体的な手順・構成・知見は [findings.md](https://github.com/roflsunriz/page-flip-2/blob/main/findings.md#readme-6) に移動しました。着手前に該当条件を確認してください。
 
 ## ライセンスと由来
 
@@ -95,4 +83,4 @@ MIT Licenseです。原著作者の著作権表示とライセンス全文は [L
 
 ## 依存更新の自動処理
 
-Dependabot は対象の依存関係を毎週確認します。更新 PR はチェック（CI）が成功した後に自動で squash merge されます。CI の失敗ジョブは 1 回だけ再実行します。再失敗時は指定した lockfile を再生成し、CI を再実行します。major 更新も CI が成功した場合に取り込みます。
+具体的な手順・構成・知見は [findings.md](https://github.com/roflsunriz/page-flip-2/blob/main/findings.md#readme-8) に移動しました。着手前に該当条件を確認してください。

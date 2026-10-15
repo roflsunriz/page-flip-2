@@ -15,13 +15,21 @@ Get-Content -Raw -LiteralPath .\COMMON-AGENTS.md
 
 ## page-flip-2の目的
 - `https://github.com/Nodlik/StPageFlip`のソースコードをコピーし、特有のバグとltr,rtl非対応,その他不備を直しリリースする
-- バグとの格闘の履歴はC:\Users\UserName\Documents\web-page-enhancement-scripts（https://github.com/roflsunriz/web-page-enhancement-scripts）のbook-style-manga-viewerのコミット履歴にあるので詳しく調査すること
 - 最終目標はbook-style-manga-viewerに統合してページフリップを使えるようにすること
 
 ## Environment
-<必要に応じて適宜書き足すこと。>
+
+具体的な手順・構成・知見は [findings.md](<findings.md#agents-3>) に移動しました。着手前に該当条件を確認してください。
 
 ## 依存更新時の注意
 
-- 2026-10-11 時点で `source-map-js` は `jsdom` から `css-tree` を経由する間接依存。`bun audit` が GHSA-68fv-2mgg-jv7q で失敗する場合、`bun.lock` の版を確認して修正版へ更新する。手順は `how-to-update.md` と `verification.md` を参照する。
-- 2026-10-11 時点で `tr46` は `whatwg-url` 経由で 7.0.0 が解決され、旧 `tr46@6.0.0` 用パッチは適用されない。間接依存を更新した際は `bun.lock` の解決版と不要になったパッチを確認する。
+具体的な手順・構成・知見は [findings.md](<findings.md#agents-4>) に移動しました。着手前に該当条件を確認してください。
+
+
+## findings.md の確認と記録
+
+- [COMMON-AGENTS.md](COMMON-AGENTS.md) を全文読了した後、調査・計画・コマンド実行・編集の前に [findings.md](findings.md) も先頭から末尾まで全文読む。出力省略や要約を読了として扱わない。
+- 構成一覧、環境情報、コマンド、調査結果、過去の事実は `findings.md` に記録する。このファイルには目的、純粋な行動義務と禁止条件を残す。
+- 変更履歴と実測検証を記録し、ユーザーの指示、変更禁止、秘密情報保護、観測可能な完了条件を弱めない。
+
+- 修正前に `findings.md` の過去の不具合調査を確認し、既存の問題を再導入しない。
