@@ -60,7 +60,7 @@
         "@eslint/js": "10.0.1",
         "@types/bun": "1.4.3",
         "@zumer/snapdom": "3.3.4",
-        "eslint": "10.12.0",
+        "eslint": "10.13.0",
         "global-jsdom": "30.0.0",
         "globals": "17.13.0",
         "jsdom": "30.1.2",
