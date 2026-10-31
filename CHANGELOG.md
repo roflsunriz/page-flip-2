@@ -6,6 +6,7 @@
 
 ### Security
 
+- 依存監査で検出されたminimatchの脆弱性を解消し、jsdom更新でundiciを修正版へ更新した。
 - Dependabot の更新 PR を脆弱性検査から再開できるよう、`jsdom` 経由の間接依存 `source-map-js` を修正版へ更新した。
 
 ### Fixed
