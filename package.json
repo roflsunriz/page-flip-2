@@ -58,15 +58,15 @@
     ],
     "devDependencies": {
         "@eslint/js": "10.0.1",
-        "@types/bun": "1.4.3",
-        "@zumer/snapdom": "3.3.4",
+        "@types/bun": "1.4.4",
+        "@zumer/snapdom": "3.5.0",
         "eslint": "10.13.0",
         "global-jsdom": "30.0.0",
         "globals": "17.13.0",
         "jsdom": "30.1.3",
         "prettier": "3.9.10",
         "typescript": "6.0.3",
-        "typescript-eslint": "8.71.2"
+        "typescript-eslint": "8.72.1"
     },
     "overrides": {
         "minimatch": "11.0.3"
