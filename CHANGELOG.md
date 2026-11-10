@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- READMEでfindings.mdへの案内に置き換わっていた本文を復元し、構成・開発・検証の説明をREADMEから直接読めるようにした。移動後のREADME更新は保持した。
+
+
 ### Security
 
 - 依存監査で検出されたminimatchの脆弱性を解消し、jsdom更新でundiciを修正版へ更新した。
